@@ -33,7 +33,7 @@ class V1ISCSIPersistentVolumeSource(BaseModel):
     iqn: StrictStr = Field(..., description="iqn is Target iSCSI Qualified Name.")
     iscsi_interface: Optional[StrictStr] = Field(default=None, alias="iscsiInterface", description="iscsiInterface is the interface Name that uses an iSCSI transport. Defaults to 'default' (tcp).")
     lun: StrictInt = Field(..., description="lun is iSCSI Target Lun number.")
-    portals: Optional[conlist(StrictStr)] = Field(default=None, description="portals is the iSCSI Target Portal List. The Portal is either an IP or ip_addr:port if the port is other than default (typically TCP ports 860 and 3260).")
+    portals: Optional[list[StrictStr]] = Field(default=None, description="portals is the iSCSI Target Portal List. The Portal is either an IP or ip_addr:port if the port is other than default (typically TCP ports 860 and 3260).")
     read_only: Optional[StrictBool] = Field(default=None, alias="readOnly", description="readOnly here will force the ReadOnly setting in VolumeMounts. Defaults to false.")
     secret_ref: Optional[V1SecretReference] = Field(default=None, alias="secretRef")
     target_portal: StrictStr = Field(..., alias="targetPortal", description="targetPortal is iSCSI Target Portal. The Portal is either an IP or ip_addr:port if the port is other than default (typically TCP ports 860 and 3260).")

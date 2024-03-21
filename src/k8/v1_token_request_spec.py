@@ -26,7 +26,7 @@ class V1TokenRequestSpec(BaseModel):
     """
     TokenRequestSpec contains client provided parameters of a token request.  # noqa: E501
     """
-    audiences: conlist(StrictStr) = Field(..., description="Audiences are the intendend audiences of the token. A recipient of a token must identify themself with an identifier in the list of audiences of the token, and otherwise should reject the token. A token issued for multiple audiences may be used to authenticate against any of the audiences listed but implies a high degree of trust between the target audiences.")
+    audiences: list[StrictStr] = Field(..., description="Audiences are the intendend audiences of the token. A recipient of a token must identify themself with an identifier in the list of audiences of the token, and otherwise should reject the token. A token issued for multiple audiences may be used to authenticate against any of the audiences listed but implies a high degree of trust between the target audiences.")
     bound_object_ref: Optional[V1BoundObjectReference] = Field(default=None, alias="boundObjectRef")
     expiration_seconds: Optional[StrictInt] = Field(default=None, alias="expirationSeconds", description="ExpirationSeconds is the requested duration of validity of the request. The token issuer may return a token with a different validity duration so a client needs to check the 'expiration' field in a response.")
     __properties = ["audiences", "boundObjectRef", "expirationSeconds"]

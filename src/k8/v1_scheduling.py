@@ -27,7 +27,7 @@ class V1Scheduling(BaseModel):
     Scheduling specifies the scheduling constraints for nodes supporting a RuntimeClass.  # noqa: E501
     """
     node_selector: Optional[Dict[str, StrictStr]] = Field(default=None, alias="nodeSelector", description="nodeSelector lists labels that must be present on nodes that support this RuntimeClass. Pods using this RuntimeClass can only be scheduled to a node matched by this selector. The RuntimeClass nodeSelector is merged with a pod's existing nodeSelector. Any conflicts will cause the pod to be rejected in admission.")
-    tolerations: Optional[conlist(V1Toleration)] = Field(default=None, description="tolerations are appended (excluding duplicates) to pods running with this RuntimeClass during admission, effectively unioning the set of nodes tolerated by the pod and the RuntimeClass.")
+    tolerations: Optional[list[V1Toleration]] = Field(default=None, description="tolerations are appended (excluding duplicates) to pods running with this RuntimeClass during admission, effectively unioning the set of nodes tolerated by the pod and the RuntimeClass.")
     __properties = ["nodeSelector", "tolerations"]
 
     class Config:

@@ -26,7 +26,7 @@ class V1CephFSPersistentVolumeSource(BaseModel):
     """
     Represents a Ceph Filesystem mount that lasts the lifetime of a pod Cephfs volumes do not support ownership management or SELinux relabeling.  # noqa: E501
     """
-    monitors: conlist(StrictStr) = Field(..., description="monitors is Required: Monitors is a collection of Ceph monitors More info: https://examples.k8s.io/volumes/cephfs/README.md#how-to-use-it")
+    monitors: list[StrictStr] = Field(..., description="monitors is Required: Monitors is a collection of Ceph monitors More info: https://examples.k8s.io/volumes/cephfs/README.md#how-to-use-it")
     path: Optional[StrictStr] = Field(default=None, description="path is Optional: Used as the mounted root, rather than the full Ceph tree, default is /")
     read_only: Optional[StrictBool] = Field(default=None, alias="readOnly", description="readOnly is Optional: Defaults to false (read/write). ReadOnly here will force the ReadOnly setting in VolumeMounts. More info: https://examples.k8s.io/volumes/cephfs/README.md#how-to-use-it")
     secret_file: Optional[StrictStr] = Field(default=None, alias="secretFile", description="secretFile is Optional: SecretFile is the path to key ring for User, default is /etc/ceph/user.secret More info: https://examples.k8s.io/volumes/cephfs/README.md#how-to-use-it")

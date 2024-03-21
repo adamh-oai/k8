@@ -27,7 +27,7 @@ class V1ReplicationControllerStatus(BaseModel):
     ReplicationControllerStatus represents the current status of a replication controller.  # noqa: E501
     """
     available_replicas: Optional[StrictInt] = Field(default=None, alias="availableReplicas", description="The number of available replicas (ready for at least minReadySeconds) for this replication controller.")
-    conditions: Optional[conlist(V1ReplicationControllerCondition)] = Field(default=None, description="Represents the latest available observations of a replication controller's current state.")
+    conditions: Optional[list[V1ReplicationControllerCondition]] = Field(default=None, description="Represents the latest available observations of a replication controller's current state.")
     fully_labeled_replicas: Optional[StrictInt] = Field(default=None, alias="fullyLabeledReplicas", description="The number of pods that have labels matching the labels of the pod template of the replication controller.")
     observed_generation: Optional[StrictInt] = Field(default=None, alias="observedGeneration", description="ObservedGeneration reflects the generation of the most recently observed replication controller.")
     ready_replicas: Optional[StrictInt] = Field(default=None, alias="readyReplicas", description="The number of ready replicas for this replication controller.")

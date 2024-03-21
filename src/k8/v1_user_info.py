@@ -25,8 +25,8 @@ class V1UserInfo(BaseModel):
     """
     UserInfo holds the information about the user needed to implement the user.Info interface.  # noqa: E501
     """
-    extra: Optional[Dict[str, conlist(StrictStr)]] = Field(default=None, description="Any additional information provided by the authenticator.")
-    groups: Optional[conlist(StrictStr)] = Field(default=None, description="The names of groups this user is a part of.")
+    extra: Optional[Dict[str, list[StrictStr]]] = Field(default=None, description="Any additional information provided by the authenticator.")
+    groups: Optional[list[StrictStr]] = Field(default=None, description="The names of groups this user is a part of.")
     uid: Optional[StrictStr] = Field(default=None, description="A unique value that identifies this user across time. If this user is deleted and another user by the same name is added, they will have different UIDs.")
     username: Optional[StrictStr] = Field(default=None, description="The name that uniquely identifies this user among all active users.")
     __properties = ["extra", "groups", "uid", "username"]

@@ -25,10 +25,10 @@ class V1ResourceRule(BaseModel):
     """
     ResourceRule is the list of actions the subject is allowed to perform on resources. The list ordering isn't significant, may contain duplicates, and possibly be incomplete.  # noqa: E501
     """
-    api_groups: Optional[conlist(StrictStr)] = Field(default=None, alias="apiGroups", description="APIGroups is the name of the APIGroup that contains the resources.  If multiple API groups are specified, any action requested against one of the enumerated resources in any API group will be allowed.  \"*\" means all.")
-    resource_names: Optional[conlist(StrictStr)] = Field(default=None, alias="resourceNames", description="ResourceNames is an optional white list of names that the rule applies to.  An empty set means that everything is allowed.  \"*\" means all.")
-    resources: Optional[conlist(StrictStr)] = Field(default=None, description="Resources is a list of resources this rule applies to.  \"*\" means all in the specified apiGroups.  \"*/foo\" represents the subresource 'foo' for all resources in the specified apiGroups.")
-    verbs: conlist(StrictStr) = Field(..., description="Verb is a list of kubernetes resource API verbs, like: get, list, watch, create, update, delete, proxy.  \"*\" means all.")
+    api_groups: Optional[list[StrictStr]] = Field(default=None, alias="apiGroups", description="APIGroups is the name of the APIGroup that contains the resources.  If multiple API groups are specified, any action requested against one of the enumerated resources in any API group will be allowed.  \"*\" means all.")
+    resource_names: Optional[list[StrictStr]] = Field(default=None, alias="resourceNames", description="ResourceNames is an optional white list of names that the rule applies to.  An empty set means that everything is allowed.  \"*\" means all.")
+    resources: Optional[list[StrictStr]] = Field(default=None, description="Resources is a list of resources this rule applies to.  \"*\" means all in the specified apiGroups.  \"*/foo\" represents the subresource 'foo' for all resources in the specified apiGroups.")
+    verbs: list[StrictStr] = Field(..., description="Verb is a list of kubernetes resource API verbs, like: get, list, watch, create, update, delete, proxy.  \"*\" means all.")
     __properties = ["apiGroups", "resourceNames", "resources", "verbs"]
 
     class Config:

@@ -26,7 +26,7 @@ class V1beta1TypeChecking(BaseModel):
     """
     TypeChecking contains results of type checking the expressions in the ValidatingAdmissionPolicy  # noqa: E501
     """
-    expression_warnings: Optional[conlist(V1beta1ExpressionWarning)] = Field(default=None, alias="expressionWarnings", description="The type checking warnings for each expression.")
+    expression_warnings: Optional[list[V1beta1ExpressionWarning]] = Field(default=None, alias="expressionWarnings", description="The type checking warnings for each expression.")
     __properties = ["expressionWarnings"]
 
     class Config:

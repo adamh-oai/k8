@@ -26,8 +26,8 @@ class V1NodeSelectorTerm(BaseModel):
     """
     A null or empty node selector term matches no objects. The requirements of them are ANDed. The TopologySelectorTerm type implements a subset of the NodeSelectorTerm.  # noqa: E501
     """
-    match_expressions: Optional[conlist(V1NodeSelectorRequirement)] = Field(default=None, alias="matchExpressions", description="A list of node selector requirements by node's labels.")
-    match_fields: Optional[conlist(V1NodeSelectorRequirement)] = Field(default=None, alias="matchFields", description="A list of node selector requirements by node's fields.")
+    match_expressions: Optional[list[V1NodeSelectorRequirement]] = Field(default=None, alias="matchExpressions", description="A list of node selector requirements by node's labels.")
+    match_fields: Optional[list[V1NodeSelectorRequirement]] = Field(default=None, alias="matchFields", description="A list of node selector requirements by node's fields.")
     __properties = ["matchExpressions", "matchFields"]
 
     class Config:

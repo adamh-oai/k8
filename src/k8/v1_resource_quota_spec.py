@@ -28,7 +28,7 @@ class V1ResourceQuotaSpec(BaseModel):
     """
     hard: Optional[Dict[str, StrictStr]] = Field(default=None, description="hard is the set of desired hard limits for each named resource. More info: https://kubernetes.io/docs/concepts/policy/resource-quotas/")
     scope_selector: Optional[V1ScopeSelector] = Field(default=None, alias="scopeSelector")
-    scopes: Optional[conlist(StrictStr)] = Field(default=None, description="A collection of filters that must match each object tracked by a quota. If not specified, the quota matches all objects.")
+    scopes: Optional[list[StrictStr]] = Field(default=None, description="A collection of filters that must match each object tracked by a quota. If not specified, the quota matches all objects.")
     __properties = ["hard", "scopeSelector", "scopes"]
 
     class Config:

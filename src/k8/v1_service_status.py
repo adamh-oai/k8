@@ -27,7 +27,7 @@ class V1ServiceStatus(BaseModel):
     """
     ServiceStatus represents the current status of a service.  # noqa: E501
     """
-    conditions: Optional[conlist(V1Condition)] = Field(default=None, description="Current service state")
+    conditions: Optional[list[V1Condition]] = Field(default=None, description="Current service state")
     load_balancer: Optional[V1LoadBalancerStatus] = Field(default=None, alias="loadBalancer")
     __properties = ["conditions", "loadBalancer"]
 

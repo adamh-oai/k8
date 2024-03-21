@@ -30,9 +30,9 @@ class V1NodeSpec(BaseModel):
     config_source: Optional[V1NodeConfigSource] = Field(default=None, alias="configSource")
     external_id: Optional[StrictStr] = Field(default=None, alias="externalID", description="Deprecated. Not all kubelets will set this field. Remove field after 1.13. see: https://issues.k8s.io/61966")
     pod_cidr: Optional[StrictStr] = Field(default=None, alias="podCIDR", description="PodCIDR represents the pod IP range assigned to the node.")
-    pod_cidrs: Optional[conlist(StrictStr)] = Field(default=None, alias="podCIDRs", description="podCIDRs represents the IP ranges assigned to the node for usage by Pods on that node. If this field is specified, the 0th entry must match the podCIDR field. It may contain at most 1 value for each of IPv4 and IPv6.")
+    pod_cidrs: Optional[list[StrictStr]] = Field(default=None, alias="podCIDRs", description="podCIDRs represents the IP ranges assigned to the node for usage by Pods on that node. If this field is specified, the 0th entry must match the podCIDR field. It may contain at most 1 value for each of IPv4 and IPv6.")
     provider_id: Optional[StrictStr] = Field(default=None, alias="providerID", description="ID of the node assigned by the cloud provider in the format: <ProviderName>://<ProviderSpecificNodeID>")
-    taints: Optional[conlist(V1Taint)] = Field(default=None, description="If specified, the node's taints.")
+    taints: Optional[list[V1Taint]] = Field(default=None, description="If specified, the node's taints.")
     unschedulable: Optional[StrictBool] = Field(default=None, description="Unschedulable controls node schedulability of new pods. By default, node is schedulable. More info: https://kubernetes.io/docs/concepts/nodes/node/#manual-node-administration")
     __properties = ["configSource", "externalID", "podCIDR", "podCIDRs", "providerID", "taints", "unschedulable"]
 

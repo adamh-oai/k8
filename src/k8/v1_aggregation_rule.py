@@ -26,7 +26,7 @@ class V1AggregationRule(BaseModel):
     """
     AggregationRule describes how to locate ClusterRoles to aggregate into the ClusterRole  # noqa: E501
     """
-    cluster_role_selectors: Optional[conlist(V1LabelSelector)] = Field(default=None, alias="clusterRoleSelectors", description="ClusterRoleSelectors holds a list of selectors which will be used to find ClusterRoles and create the rules. If any of the selectors match, then the ClusterRole's permissions will be added")
+    cluster_role_selectors: Optional[list[V1LabelSelector]] = Field(default=None, alias="clusterRoleSelectors", description="ClusterRoleSelectors holds a list of selectors which will be used to find ClusterRoles and create the rules. If any of the selectors match, then the ClusterRole's permissions will be added")
     __properties = ["clusterRoleSelectors"]
 
     class Config:

@@ -27,8 +27,8 @@ class V2HorizontalPodAutoscalerStatus(BaseModel):
     """
     HorizontalPodAutoscalerStatus describes the current status of a horizontal pod autoscaler.  # noqa: E501
     """
-    conditions: Optional[conlist(V2HorizontalPodAutoscalerCondition)] = Field(default=None, description="conditions is the set of conditions required for this autoscaler to scale its target, and indicates whether or not those conditions are met.")
-    current_metrics: Optional[conlist(V2MetricStatus)] = Field(default=None, alias="currentMetrics", description="currentMetrics is the last read state of the metrics used by this autoscaler.")
+    conditions: Optional[list[V2HorizontalPodAutoscalerCondition]] = Field(default=None, description="conditions is the set of conditions required for this autoscaler to scale its target, and indicates whether or not those conditions are met.")
+    current_metrics: Optional[list[V2MetricStatus]] = Field(default=None, alias="currentMetrics", description="currentMetrics is the last read state of the metrics used by this autoscaler.")
     current_replicas: Optional[StrictInt] = Field(default=None, alias="currentReplicas", description="currentReplicas is current number of replicas of pods managed by this autoscaler, as last seen by the autoscaler.")
     desired_replicas: StrictInt = Field(..., alias="desiredReplicas", description="desiredReplicas is the desired number of replicas of pods managed by this autoscaler, as last calculated by the autoscaler.")
     last_scale_time: Optional[datetime] = Field(default=None, alias="lastScaleTime", description="lastScaleTime is the last time the HorizontalPodAutoscaler scaled the number of pods, used by the autoscaler to control how often the number of pods is changed.")

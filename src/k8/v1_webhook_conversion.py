@@ -27,7 +27,7 @@ class V1WebhookConversion(BaseModel):
     WebhookConversion describes how to call a conversion webhook  # noqa: E501
     """
     client_config: Optional[ApiextensionsV1WebhookClientConfig] = Field(default=None, alias="clientConfig")
-    conversion_review_versions: conlist(StrictStr) = Field(..., alias="conversionReviewVersions", description="conversionReviewVersions is an ordered list of preferred `ConversionReview` versions the Webhook expects. The API server will use the first version in the list which it supports. If none of the versions specified in this list are supported by API server, conversion will fail for the custom resource. If a persisted Webhook configuration specifies allowed versions and does not include any versions known to the API Server, calls to the webhook will fail.")
+    conversion_review_versions: list[StrictStr] = Field(..., alias="conversionReviewVersions", description="conversionReviewVersions is an ordered list of preferred `ConversionReview` versions the Webhook expects. The API server will use the first version in the list which it supports. If none of the versions specified in this list are supported by API server, conversion will fail for the custom resource. If a persisted Webhook configuration specifies allowed versions and does not include any versions known to the API Server, calls to the webhook will fail.")
     __properties = ["clientConfig", "conversionReviewVersions"]
 
     class Config:

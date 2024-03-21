@@ -32,7 +32,7 @@ class V1ClusterRoleBinding(BaseModel):
     kind: Optional[StrictStr] = Field(default=None, description="Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds")
     metadata: Optional[V1ObjectMeta] = None
     role_ref: V1RoleRef = Field(..., alias="roleRef")
-    subjects: Optional[conlist(RbacV1Subject)] = Field(default=None, description="Subjects holds references to the objects the role applies to.")
+    subjects: Optional[list[RbacV1Subject]] = Field(default=None, description="Subjects holds references to the objects the role applies to.")
     __properties = ["apiVersion", "kind", "metadata", "roleRef", "subjects"]
 
     class Config:

@@ -49,7 +49,7 @@ class V1PersistentVolumeSpec(BaseModel):
     """
     PersistentVolumeSpec is the specification of a persistent volume.  # noqa: E501
     """
-    access_modes: Optional[conlist(StrictStr)] = Field(default=None, alias="accessModes", description="accessModes contains all ways the volume can be mounted. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#access-modes")
+    access_modes: Optional[list[StrictStr]] = Field(default=None, alias="accessModes", description="accessModes contains all ways the volume can be mounted. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#access-modes")
     aws_elastic_block_store: Optional[V1AWSElasticBlockStoreVolumeSource] = Field(default=None, alias="awsElasticBlockStore")
     azure_disk: Optional[V1AzureDiskVolumeSource] = Field(default=None, alias="azureDisk")
     azure_file: Optional[V1AzureFilePersistentVolumeSource] = Field(default=None, alias="azureFile")
@@ -66,7 +66,7 @@ class V1PersistentVolumeSpec(BaseModel):
     host_path: Optional[V1HostPathVolumeSource] = Field(default=None, alias="hostPath")
     iscsi: Optional[V1ISCSIPersistentVolumeSource] = None
     local: Optional[V1LocalVolumeSource] = None
-    mount_options: Optional[conlist(StrictStr)] = Field(default=None, alias="mountOptions", description="mountOptions is the list of mount options, e.g. [\"ro\", \"soft\"]. Not validated - mount will simply fail if one is invalid. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes/#mount-options")
+    mount_options: Optional[list[StrictStr]] = Field(default=None, alias="mountOptions", description="mountOptions is the list of mount options, e.g. [\"ro\", \"soft\"]. Not validated - mount will simply fail if one is invalid. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes/#mount-options")
     nfs: Optional[V1NFSVolumeSource] = None
     node_affinity: Optional[V1VolumeNodeAffinity] = Field(default=None, alias="nodeAffinity")
     persistent_volume_reclaim_policy: Optional[StrictStr] = Field(default=None, alias="persistentVolumeReclaimPolicy", description="persistentVolumeReclaimPolicy defines what happens to a persistent volume when released from its claim. Valid options are Retain (default for manually created PersistentVolumes), Delete (default for dynamically provisioned PersistentVolumes), and Recycle (deprecated). Recycle must be supported by the volume plugin underlying this PersistentVolume. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#reclaiming")

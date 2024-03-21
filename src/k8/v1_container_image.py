@@ -25,7 +25,7 @@ class V1ContainerImage(BaseModel):
     """
     Describe a container image  # noqa: E501
     """
-    names: Optional[conlist(StrictStr)] = Field(default=None, description="Names by which this image is known. e.g. [\"kubernetes.example/hyperkube:v1.0.7\", \"cloud-vendor.registry.example/cloud-vendor/hyperkube:v1.0.7\"]")
+    names: Optional[list[StrictStr]] = Field(default=None, description="Names by which this image is known. e.g. [\"kubernetes.example/hyperkube:v1.0.7\", \"cloud-vendor.registry.example/cloud-vendor/hyperkube:v1.0.7\"]")
     size_bytes: Optional[StrictInt] = Field(default=None, alias="sizeBytes", description="The size of the image in bytes.")
     __properties = ["names", "sizeBytes"]
 

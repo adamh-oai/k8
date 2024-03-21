@@ -26,7 +26,7 @@ class V1NamespaceStatus(BaseModel):
     """
     NamespaceStatus is information about the current status of a Namespace.  # noqa: E501
     """
-    conditions: Optional[conlist(V1NamespaceCondition)] = Field(default=None, description="Represents the latest available observations of a namespace's current state.")
+    conditions: Optional[list[V1NamespaceCondition]] = Field(default=None, description="Represents the latest available observations of a namespace's current state.")
     phase: Optional[StrictStr] = Field(default=None, description="Phase is the current lifecycle phase of the namespace. More info: https://kubernetes.io/docs/tasks/administer-cluster/namespaces/")
     __properties = ["conditions", "phase"]
 

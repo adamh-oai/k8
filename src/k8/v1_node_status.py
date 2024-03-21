@@ -32,17 +32,17 @@ class V1NodeStatus(BaseModel):
     """
     NodeStatus is information about the current status of a node.  # noqa: E501
     """
-    addresses: Optional[conlist(V1NodeAddress)] = Field(default=None, description="List of addresses reachable to the node. Queried from cloud provider, if available. More info: https://kubernetes.io/docs/concepts/nodes/node/#addresses Note: This field is declared as mergeable, but the merge key is not sufficiently unique, which can cause data corruption when it is merged. Callers should instead use a full-replacement patch. See https://pr.k8s.io/79391 for an example. Consumers should assume that addresses can change during the lifetime of a Node. However, there are some exceptions where this may not be possible, such as Pods that inherit a Node's address in its own status or consumers of the downward API (status.hostIP).")
+    addresses: Optional[list[V1NodeAddress]] = Field(default=None, description="List of addresses reachable to the node. Queried from cloud provider, if available. More info: https://kubernetes.io/docs/concepts/nodes/node/#addresses Note: This field is declared as mergeable, but the merge key is not sufficiently unique, which can cause data corruption when it is merged. Callers should instead use a full-replacement patch. See https://pr.k8s.io/79391 for an example. Consumers should assume that addresses can change during the lifetime of a Node. However, there are some exceptions where this may not be possible, such as Pods that inherit a Node's address in its own status or consumers of the downward API (status.hostIP).")
     allocatable: Optional[Dict[str, StrictStr]] = Field(default=None, description="Allocatable represents the resources of a node that are available for scheduling. Defaults to Capacity.")
     capacity: Optional[Dict[str, StrictStr]] = Field(default=None, description="Capacity represents the total resources of a node. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#capacity")
-    conditions: Optional[conlist(V1NodeCondition)] = Field(default=None, description="Conditions is an array of current observed node conditions. More info: https://kubernetes.io/docs/concepts/nodes/node/#condition")
+    conditions: Optional[list[V1NodeCondition]] = Field(default=None, description="Conditions is an array of current observed node conditions. More info: https://kubernetes.io/docs/concepts/nodes/node/#condition")
     config: Optional[V1NodeConfigStatus] = None
     daemon_endpoints: Optional[V1NodeDaemonEndpoints] = Field(default=None, alias="daemonEndpoints")
-    images: Optional[conlist(V1ContainerImage)] = Field(default=None, description="List of container images on this node")
+    images: Optional[list[V1ContainerImage]] = Field(default=None, description="List of container images on this node")
     node_info: Optional[V1NodeSystemInfo] = Field(default=None, alias="nodeInfo")
     phase: Optional[StrictStr] = Field(default=None, description="NodePhase is the recently observed lifecycle phase of the node. More info: https://kubernetes.io/docs/concepts/nodes/node/#phase The field is never populated, and now is deprecated.")
-    volumes_attached: Optional[conlist(V1AttachedVolume)] = Field(default=None, alias="volumesAttached", description="List of volumes that are attached to the node.")
-    volumes_in_use: Optional[conlist(StrictStr)] = Field(default=None, alias="volumesInUse", description="List of attachable volumes in use (mounted) by the node.")
+    volumes_attached: Optional[list[V1AttachedVolume]] = Field(default=None, alias="volumesAttached", description="List of volumes that are attached to the node.")
+    volumes_in_use: Optional[list[StrictStr]] = Field(default=None, alias="volumesInUse", description="List of attachable volumes in use (mounted) by the node.")
     __properties = ["addresses", "allocatable", "capacity", "conditions", "config", "daemonEndpoints", "images", "nodeInfo", "phase", "volumesAttached", "volumesInUse"]
 
     class Config:

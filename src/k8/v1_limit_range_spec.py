@@ -26,7 +26,7 @@ class V1LimitRangeSpec(BaseModel):
     """
     LimitRangeSpec defines a min/max usage limit for resources that match on kind.  # noqa: E501
     """
-    limits: conlist(V1LimitRangeItem) = Field(..., description="Limits is the list of LimitRangeItem objects that are enforced.")
+    limits: list[V1LimitRangeItem] = Field(..., description="Limits is the list of LimitRangeItem objects that are enforced.")
     __properties = ["limits"]
 
     class Config:

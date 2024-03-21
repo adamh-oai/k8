@@ -26,9 +26,9 @@ class V1PodDNSConfig(BaseModel):
     """
     PodDNSConfig defines the DNS parameters of a pod in addition to those generated from DNSPolicy.  # noqa: E501
     """
-    nameservers: Optional[conlist(StrictStr)] = Field(default=None, description="A list of DNS name server IP addresses. This will be appended to the base nameservers generated from DNSPolicy. Duplicated nameservers will be removed.")
-    options: Optional[conlist(V1PodDNSConfigOption)] = Field(default=None, description="A list of DNS resolver options. This will be merged with the base options generated from DNSPolicy. Duplicated entries will be removed. Resolution options given in Options will override those that appear in the base DNSPolicy.")
-    searches: Optional[conlist(StrictStr)] = Field(default=None, description="A list of DNS search domains for host-name lookup. This will be appended to the base search paths generated from DNSPolicy. Duplicated search paths will be removed.")
+    nameservers: Optional[list[StrictStr]] = Field(default=None, description="A list of DNS name server IP addresses. This will be appended to the base nameservers generated from DNSPolicy. Duplicated nameservers will be removed.")
+    options: Optional[list[V1PodDNSConfigOption]] = Field(default=None, description="A list of DNS resolver options. This will be merged with the base options generated from DNSPolicy. Duplicated entries will be removed. Resolution options given in Options will override those that appear in the base DNSPolicy.")
+    searches: Optional[list[StrictStr]] = Field(default=None, description="A list of DNS search domains for host-name lookup. This will be appended to the base search paths generated from DNSPolicy. Duplicated search paths will be removed.")
     __properties = ["nameservers", "options", "searches"]
 
     class Config:

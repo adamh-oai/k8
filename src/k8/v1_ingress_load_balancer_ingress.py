@@ -28,7 +28,7 @@ class V1IngressLoadBalancerIngress(BaseModel):
     """
     hostname: Optional[StrictStr] = Field(default=None, description="hostname is set for load-balancer ingress points that are DNS based.")
     ip: Optional[StrictStr] = Field(default=None, description="ip is set for load-balancer ingress points that are IP based.")
-    ports: Optional[conlist(V1IngressPortStatus)] = Field(default=None, description="ports provides information about the ports exposed by this LoadBalancer.")
+    ports: Optional[list[V1IngressPortStatus]] = Field(default=None, description="ports provides information about the ports exposed by this LoadBalancer.")
     __properties = ["hostname", "ip", "ports"]
 
     class Config:

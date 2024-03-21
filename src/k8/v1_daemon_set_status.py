@@ -27,7 +27,7 @@ class V1DaemonSetStatus(BaseModel):
     DaemonSetStatus represents the current status of a daemon set.  # noqa: E501
     """
     collision_count: Optional[StrictInt] = Field(default=None, alias="collisionCount", description="Count of hash collisions for the DaemonSet. The DaemonSet controller uses this field as a collision avoidance mechanism when it needs to create the name for the newest ControllerRevision.")
-    conditions: Optional[conlist(V1DaemonSetCondition)] = Field(default=None, description="Represents the latest available observations of a DaemonSet's current state.")
+    conditions: Optional[list[V1DaemonSetCondition]] = Field(default=None, description="Represents the latest available observations of a DaemonSet's current state.")
     current_number_scheduled: StrictInt = Field(..., alias="currentNumberScheduled", description="The number of nodes that are running at least 1 daemon pod and are supposed to run the daemon pod. More info: https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/")
     desired_number_scheduled: StrictInt = Field(..., alias="desiredNumberScheduled", description="The total number of nodes that should be running the daemon pod (including nodes correctly running the daemon pod). More info: https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/")
     number_available: Optional[StrictInt] = Field(default=None, alias="numberAvailable", description="The number of nodes that should be running the daemon pod and have one or more of the daemon pod running and available (ready for at least spec.minReadySeconds)")

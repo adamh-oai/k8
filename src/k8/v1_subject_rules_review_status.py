@@ -29,8 +29,8 @@ class V1SubjectRulesReviewStatus(BaseModel):
     """
     evaluation_error: Optional[StrictStr] = Field(default=None, alias="evaluationError", description="EvaluationError can appear in combination with Rules. It indicates an error occurred during rule evaluation, such as an authorizer that doesn't support rule evaluation, and that ResourceRules and/or NonResourceRules may be incomplete.")
     incomplete: StrictBool = Field(..., description="Incomplete is true when the rules returned by this call are incomplete. This is most commonly encountered when an authorizer, such as an external authorizer, doesn't support rules evaluation.")
-    non_resource_rules: conlist(V1NonResourceRule) = Field(..., alias="nonResourceRules", description="NonResourceRules is the list of actions the subject is allowed to perform on non-resources. The list ordering isn't significant, may contain duplicates, and possibly be incomplete.")
-    resource_rules: conlist(V1ResourceRule) = Field(..., alias="resourceRules", description="ResourceRules is the list of actions the subject is allowed to perform on resources. The list ordering isn't significant, may contain duplicates, and possibly be incomplete.")
+    non_resource_rules: list[V1NonResourceRule] = Field(..., alias="nonResourceRules", description="NonResourceRules is the list of actions the subject is allowed to perform on non-resources. The list ordering isn't significant, may contain duplicates, and possibly be incomplete.")
+    resource_rules: list[V1ResourceRule] = Field(..., alias="resourceRules", description="ResourceRules is the list of actions the subject is allowed to perform on resources. The list ordering isn't significant, may contain duplicates, and possibly be incomplete.")
     __properties = ["evaluationError", "incomplete", "nonResourceRules", "resourceRules"]
 
     class Config:

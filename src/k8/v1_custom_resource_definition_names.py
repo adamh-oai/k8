@@ -25,11 +25,11 @@ class V1CustomResourceDefinitionNames(BaseModel):
     """
     CustomResourceDefinitionNames indicates the names to serve this CustomResourceDefinition  # noqa: E501
     """
-    categories: Optional[conlist(StrictStr)] = Field(default=None, description="categories is a list of grouped resources this custom resource belongs to (e.g. 'all'). This is published in API discovery documents, and used by clients to support invocations like `kubectl get all`.")
+    categories: Optional[list[StrictStr]] = Field(default=None, description="categories is a list of grouped resources this custom resource belongs to (e.g. 'all'). This is published in API discovery documents, and used by clients to support invocations like `kubectl get all`.")
     kind: StrictStr = Field(..., description="kind is the serialized kind of the resource. It is normally CamelCase and singular. Custom resource instances will use this value as the `kind` attribute in API calls.")
     list_kind: Optional[StrictStr] = Field(default=None, alias="listKind", description="listKind is the serialized kind of the list for this resource. Defaults to \"`kind`List\".")
     plural: StrictStr = Field(..., description="plural is the plural name of the resource to serve. The custom resources are served under `/apis/<group>/<version>/.../<plural>`. Must match the name of the CustomResourceDefinition (in the form `<names.plural>.<group>`). Must be all lowercase.")
-    short_names: Optional[conlist(StrictStr)] = Field(default=None, alias="shortNames", description="shortNames are short names for the resource, exposed in API discovery documents, and used by clients to support invocations like `kubectl get <shortname>`. It must be all lowercase.")
+    short_names: Optional[list[StrictStr]] = Field(default=None, alias="shortNames", description="shortNames are short names for the resource, exposed in API discovery documents, and used by clients to support invocations like `kubectl get <shortname>`. It must be all lowercase.")
     singular: Optional[StrictStr] = Field(default=None, description="singular is the singular name of the resource. It must be all lowercase. Defaults to lowercased `kind`.")
     __properties = ["categories", "kind", "listKind", "plural", "shortNames", "singular"]
 

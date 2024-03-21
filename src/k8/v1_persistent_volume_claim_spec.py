@@ -29,7 +29,7 @@ class V1PersistentVolumeClaimSpec(BaseModel):
     """
     PersistentVolumeClaimSpec describes the common attributes of storage devices and allows a Source for provider-specific attributes  # noqa: E501
     """
-    access_modes: Optional[conlist(StrictStr)] = Field(default=None, alias="accessModes", description="accessModes contains the desired access modes the volume should have. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#access-modes-1")
+    access_modes: Optional[list[StrictStr]] = Field(default=None, alias="accessModes", description="accessModes contains the desired access modes the volume should have. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#access-modes-1")
     data_source: Optional[V1TypedLocalObjectReference] = Field(default=None, alias="dataSource")
     data_source_ref: Optional[V1TypedObjectReference] = Field(default=None, alias="dataSourceRef")
     resources: Optional[V1VolumeResourceRequirements] = None

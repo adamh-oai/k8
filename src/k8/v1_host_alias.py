@@ -25,7 +25,7 @@ class V1HostAlias(BaseModel):
     """
     HostAlias holds the mapping between IP and hostnames that will be injected as an entry in the pod's hosts file.  # noqa: E501
     """
-    hostnames: Optional[conlist(StrictStr)] = Field(default=None, description="Hostnames for the above IP address.")
+    hostnames: Optional[list[StrictStr]] = Field(default=None, description="Hostnames for the above IP address.")
     ip: Optional[StrictStr] = Field(default=None, description="IP address of the host file entry.")
     __properties = ["hostnames", "ip"]
 

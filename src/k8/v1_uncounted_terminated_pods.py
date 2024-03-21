@@ -25,8 +25,8 @@ class V1UncountedTerminatedPods(BaseModel):
     """
     UncountedTerminatedPods holds UIDs of Pods that have terminated but haven't been accounted in Job status counters.  # noqa: E501
     """
-    failed: Optional[conlist(StrictStr)] = Field(default=None, description="failed holds UIDs of failed Pods.")
-    succeeded: Optional[conlist(StrictStr)] = Field(default=None, description="succeeded holds UIDs of succeeded Pods.")
+    failed: Optional[list[StrictStr]] = Field(default=None, description="failed holds UIDs of failed Pods.")
+    succeeded: Optional[list[StrictStr]] = Field(default=None, description="succeeded holds UIDs of succeeded Pods.")
     __properties = ["failed", "succeeded"]
 
     class Config:

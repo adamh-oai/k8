@@ -26,7 +26,7 @@ class V1IngressLoadBalancerStatus(BaseModel):
     """
     IngressLoadBalancerStatus represents the status of a load-balancer.  # noqa: E501
     """
-    ingress: Optional[conlist(V1IngressLoadBalancerIngress)] = Field(default=None, description="ingress is a list containing ingress points for the load-balancer.")
+    ingress: Optional[list[V1IngressLoadBalancerIngress]] = Field(default=None, description="ingress is a list containing ingress points for the load-balancer.")
     __properties = ["ingress"]
 
     class Config:

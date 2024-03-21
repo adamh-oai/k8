@@ -27,7 +27,7 @@ class V1ReplicaSetStatus(BaseModel):
     ReplicaSetStatus represents the current status of a ReplicaSet.  # noqa: E501
     """
     available_replicas: Optional[StrictInt] = Field(default=None, alias="availableReplicas", description="The number of available replicas (ready for at least minReadySeconds) for this replica set.")
-    conditions: Optional[conlist(V1ReplicaSetCondition)] = Field(default=None, description="Represents the latest available observations of a replica set's current state.")
+    conditions: Optional[list[V1ReplicaSetCondition]] = Field(default=None, description="Represents the latest available observations of a replica set's current state.")
     fully_labeled_replicas: Optional[StrictInt] = Field(default=None, alias="fullyLabeledReplicas", description="The number of pods that have labels matching the labels of the pod template of the replicaset.")
     observed_generation: Optional[StrictInt] = Field(default=None, alias="observedGeneration", description="ObservedGeneration reflects the generation of the most recently observed ReplicaSet.")
     ready_replicas: Optional[StrictInt] = Field(default=None, alias="readyReplicas", description="readyReplicas is the number of pods targeted by this ReplicaSet with a Ready Condition.")

@@ -26,7 +26,7 @@ class V1alpha2PodSchedulingContextStatus(BaseModel):
     """
     PodSchedulingContextStatus describes where resources for the Pod can be allocated.  # noqa: E501
     """
-    resource_claims: Optional[conlist(V1alpha2ResourceClaimSchedulingStatus)] = Field(default=None, alias="resourceClaims", description="ResourceClaims describes resource availability for each pod.spec.resourceClaim entry where the corresponding ResourceClaim uses \"WaitForFirstConsumer\" allocation mode.")
+    resource_claims: Optional[list[V1alpha2ResourceClaimSchedulingStatus]] = Field(default=None, alias="resourceClaims", description="ResourceClaims describes resource availability for each pod.spec.resourceClaim entry where the corresponding ResourceClaim uses \"WaitForFirstConsumer\" allocation mode.")
     __properties = ["resourceClaims"]
 
     class Config:

@@ -26,7 +26,7 @@ class V1alpha2ResourceClaimSchedulingStatus(BaseModel):
     ResourceClaimSchedulingStatus contains information about one particular ResourceClaim with \"WaitForFirstConsumer\" allocation mode.  # noqa: E501
     """
     name: Optional[StrictStr] = Field(default=None, description="Name matches the pod.spec.resourceClaims[*].Name field.")
-    unsuitable_nodes: Optional[conlist(StrictStr)] = Field(default=None, alias="unsuitableNodes", description="UnsuitableNodes lists nodes that the ResourceClaim cannot be allocated for.  The size of this field is limited to 128, the same as for PodSchedulingSpec.PotentialNodes. This may get increased in the future, but not reduced.")
+    unsuitable_nodes: Optional[list[StrictStr]] = Field(default=None, alias="unsuitableNodes", description="UnsuitableNodes lists nodes that the ResourceClaim cannot be allocated for.  The size of this field is limited to 128, the same as for PodSchedulingSpec.PotentialNodes. This may get increased in the future, but not reduced.")
     __properties = ["name", "unsuitableNodes"]
 
     class Config:

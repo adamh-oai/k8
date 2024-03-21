@@ -26,7 +26,7 @@ class V1TopologySelectorLabelRequirement(BaseModel):
     A topology selector requirement is a selector that matches given label. This is an alpha feature and may change in the future.  # noqa: E501
     """
     key: StrictStr = Field(..., description="The label key that the selector applies to.")
-    values: conlist(StrictStr) = Field(..., description="An array of string values. One value must match the label to be selected. Each entry in Values is ORed.")
+    values: list[StrictStr] = Field(..., description="An array of string values. One value must match the label to be selected. Each entry in Values is ORed.")
     __properties = ["key", "values"]
 
     class Config:

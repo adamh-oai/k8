@@ -28,7 +28,7 @@ class V1DeploymentStatus(BaseModel):
     """
     available_replicas: Optional[StrictInt] = Field(default=None, alias="availableReplicas", description="Total number of available pods (ready for at least minReadySeconds) targeted by this deployment.")
     collision_count: Optional[StrictInt] = Field(default=None, alias="collisionCount", description="Count of hash collisions for the Deployment. The Deployment controller uses this field as a collision avoidance mechanism when it needs to create the name for the newest ReplicaSet.")
-    conditions: Optional[conlist(V1DeploymentCondition)] = Field(default=None, description="Represents the latest available observations of a deployment's current state.")
+    conditions: Optional[list[V1DeploymentCondition]] = Field(default=None, description="Represents the latest available observations of a deployment's current state.")
     observed_generation: Optional[StrictInt] = Field(default=None, alias="observedGeneration", description="The generation observed by the deployment controller.")
     ready_replicas: Optional[StrictInt] = Field(default=None, alias="readyReplicas", description="readyReplicas is the number of pods targeted by this Deployment with a Ready Condition.")
     replicas: Optional[StrictInt] = Field(default=None, description="Total number of non-terminated pods targeted by this deployment (their labels match the selector).")

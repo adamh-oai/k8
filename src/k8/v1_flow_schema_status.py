@@ -26,7 +26,7 @@ class V1FlowSchemaStatus(BaseModel):
     """
     FlowSchemaStatus represents the current state of a FlowSchema.  # noqa: E501
     """
-    conditions: Optional[conlist(V1FlowSchemaCondition)] = Field(default=None, description="`conditions` is a list of the current states of FlowSchema.")
+    conditions: Optional[list[V1FlowSchemaCondition]] = Field(default=None, description="`conditions` is a list of the current states of FlowSchema.")
     __properties = ["conditions"]
 
     class Config:

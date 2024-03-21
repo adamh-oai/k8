@@ -26,7 +26,7 @@ class V1EndpointHints(BaseModel):
     """
     EndpointHints provides hints describing how an endpoint should be consumed.  # noqa: E501
     """
-    for_zones: Optional[conlist(V1ForZone)] = Field(default=None, alias="forZones", description="forZones indicates the zone(s) this endpoint should be consumed by to enable topology aware routing.")
+    for_zones: Optional[list[V1ForZone]] = Field(default=None, alias="forZones", description="forZones indicates the zone(s) this endpoint should be consumed by to enable topology aware routing.")
     __properties = ["forZones"]
 
     class Config:

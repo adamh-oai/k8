@@ -32,4 +32,9 @@ find $TARGET_DIR -type f -name "*.py" -exec sed -i '' 's/client.models\./\./g' {
 echo "Correcting default arguments..."
 find $TARGET_DIR -type f -name "*.py" -exec sed -i '' 's/Field(None/Field(default=None/g' {} +
 
+# Replace usage of conlist(x)
+echo "Fixing conlist..."
+find $TARGET_DIR -type f -name "*.py" -exec sed -i '' 's/conlist(\([a-zA-Z0-9]*\))/list[\1]/g' {} +
+
+
 echo "done."

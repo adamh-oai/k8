@@ -28,7 +28,7 @@ class V1StatefulSetStatus(BaseModel):
     """
     available_replicas: Optional[StrictInt] = Field(default=None, alias="availableReplicas", description="Total number of available pods (ready for at least minReadySeconds) targeted by this statefulset.")
     collision_count: Optional[StrictInt] = Field(default=None, alias="collisionCount", description="collisionCount is the count of hash collisions for the StatefulSet. The StatefulSet controller uses this field as a collision avoidance mechanism when it needs to create the name for the newest ControllerRevision.")
-    conditions: Optional[conlist(V1StatefulSetCondition)] = Field(default=None, description="Represents the latest available observations of a statefulset's current state.")
+    conditions: Optional[list[V1StatefulSetCondition]] = Field(default=None, description="Represents the latest available observations of a statefulset's current state.")
     current_replicas: Optional[StrictInt] = Field(default=None, alias="currentReplicas", description="currentReplicas is the number of Pods created by the StatefulSet controller from the StatefulSet version indicated by currentRevision.")
     current_revision: Optional[StrictStr] = Field(default=None, alias="currentRevision", description="currentRevision, if not empty, indicates the version of the StatefulSet used to generate Pods in the sequence [0,currentReplicas).")
     observed_generation: Optional[StrictInt] = Field(default=None, alias="observedGeneration", description="observedGeneration is the most recent generation observed for this StatefulSet. It corresponds to the StatefulSet's generation, which is updated on mutation by the API Server.")

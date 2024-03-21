@@ -25,8 +25,8 @@ class V1Capabilities(BaseModel):
     """
     Adds and removes POSIX capabilities from running containers.  # noqa: E501
     """
-    add: Optional[conlist(StrictStr)] = Field(default=None, description="Added capabilities")
-    drop: Optional[conlist(StrictStr)] = Field(default=None, description="Removed capabilities")
+    add: Optional[list[StrictStr]] = Field(default=None, description="Added capabilities")
+    drop: Optional[list[StrictStr]] = Field(default=None, description="Removed capabilities")
     __properties = ["add", "drop"]
 
     class Config:

@@ -25,8 +25,8 @@ class V1NonResourceRule(BaseModel):
     """
     NonResourceRule holds information that describes a rule for the non-resource  # noqa: E501
     """
-    non_resource_urls: Optional[conlist(StrictStr)] = Field(default=None, alias="nonResourceURLs", description="NonResourceURLs is a set of partial urls that a user should have access to.  *s are allowed, but only as the full, final step in the path.  \"*\" means all.")
-    verbs: conlist(StrictStr) = Field(..., description="Verb is a list of kubernetes non-resource API verbs, like: get, post, put, delete, patch, head, options.  \"*\" means all.")
+    non_resource_urls: Optional[list[StrictStr]] = Field(default=None, alias="nonResourceURLs", description="NonResourceURLs is a set of partial urls that a user should have access to.  *s are allowed, but only as the full, final step in the path.  \"*\" means all.")
+    verbs: list[StrictStr] = Field(..., description="Verb is a list of kubernetes non-resource API verbs, like: get, post, put, delete, patch, head, options.  \"*\" means all.")
     __properties = ["nonResourceURLs", "verbs"]
 
     class Config:

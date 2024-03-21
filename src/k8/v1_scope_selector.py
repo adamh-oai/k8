@@ -26,7 +26,7 @@ class V1ScopeSelector(BaseModel):
     """
     A scope selector represents the AND of the selectors represented by the scoped-resource selector requirements.  # noqa: E501
     """
-    match_expressions: Optional[conlist(V1ScopedResourceSelectorRequirement)] = Field(default=None, alias="matchExpressions", description="A list of scope selector requirements by scope of the resources.")
+    match_expressions: Optional[list[V1ScopedResourceSelectorRequirement]] = Field(default=None, alias="matchExpressions", description="A list of scope selector requirements by scope of the resources.")
     __properties = ["matchExpressions"]
 
     class Config:

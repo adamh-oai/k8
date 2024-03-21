@@ -28,8 +28,8 @@ class V1FCVolumeSource(BaseModel):
     fs_type: Optional[StrictStr] = Field(default=None, alias="fsType", description="fsType is the filesystem type to mount. Must be a filesystem type supported by the host operating system. Ex. \"ext4\", \"xfs\", \"ntfs\". Implicitly inferred to be \"ext4\" if unspecified.")
     lun: Optional[StrictInt] = Field(default=None, description="lun is Optional: FC target lun number")
     read_only: Optional[StrictBool] = Field(default=None, alias="readOnly", description="readOnly is Optional: Defaults to false (read/write). ReadOnly here will force the ReadOnly setting in VolumeMounts.")
-    target_wwns: Optional[conlist(StrictStr)] = Field(default=None, alias="targetWWNs", description="targetWWNs is Optional: FC target worldwide names (WWNs)")
-    wwids: Optional[conlist(StrictStr)] = Field(default=None, description="wwids Optional: FC volume world wide identifiers (wwids) Either wwids or combination of targetWWNs and lun must be set, but not both simultaneously.")
+    target_wwns: Optional[list[StrictStr]] = Field(default=None, alias="targetWWNs", description="targetWWNs is Optional: FC target worldwide names (WWNs)")
+    wwids: Optional[list[StrictStr]] = Field(default=None, description="wwids Optional: FC volume world wide identifiers (wwids) Either wwids or combination of targetWWNs and lun must be set, but not both simultaneously.")
     __properties = ["fsType", "lun", "readOnly", "targetWWNs", "wwids"]
 
     class Config:

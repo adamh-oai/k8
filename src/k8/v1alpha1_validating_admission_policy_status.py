@@ -27,7 +27,7 @@ class V1alpha1ValidatingAdmissionPolicyStatus(BaseModel):
     """
     ValidatingAdmissionPolicyStatus represents the status of a ValidatingAdmissionPolicy.  # noqa: E501
     """
-    conditions: Optional[conlist(V1Condition)] = Field(default=None, description="The conditions represent the latest available observations of a policy's current state.")
+    conditions: Optional[list[V1Condition]] = Field(default=None, description="The conditions represent the latest available observations of a policy's current state.")
     observed_generation: Optional[StrictInt] = Field(default=None, alias="observedGeneration", description="The generation observed by the controller.")
     type_checking: Optional[V1alpha1TypeChecking] = Field(default=None, alias="typeChecking")
     __properties = ["conditions", "observedGeneration", "typeChecking"]

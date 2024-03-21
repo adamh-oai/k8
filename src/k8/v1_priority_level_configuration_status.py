@@ -26,7 +26,7 @@ class V1PriorityLevelConfigurationStatus(BaseModel):
     """
     PriorityLevelConfigurationStatus represents the current state of a \"request-priority\".  # noqa: E501
     """
-    conditions: Optional[conlist(V1PriorityLevelConfigurationCondition)] = Field(default=None, description="`conditions` is the current state of \"request-priority\".")
+    conditions: Optional[list[V1PriorityLevelConfigurationCondition]] = Field(default=None, description="`conditions` is the current state of \"request-priority\".")
     __properties = ["conditions"]
 
     class Config:

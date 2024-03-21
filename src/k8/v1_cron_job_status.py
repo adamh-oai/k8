@@ -26,7 +26,7 @@ class V1CronJobStatus(BaseModel):
     """
     CronJobStatus represents the current state of a cron job.  # noqa: E501
     """
-    active: Optional[conlist(V1ObjectReference)] = Field(default=None, description="A list of pointers to currently running jobs.")
+    active: Optional[list[V1ObjectReference]] = Field(default=None, description="A list of pointers to currently running jobs.")
     last_schedule_time: Optional[datetime] = Field(default=None, alias="lastScheduleTime", description="Information when was the last time the job was successfully scheduled.")
     last_successful_time: Optional[datetime] = Field(default=None, alias="lastSuccessfulTime", description="Information when was the last time the job successfully completed.")
     __properties = ["active", "lastScheduleTime", "lastSuccessfulTime"]

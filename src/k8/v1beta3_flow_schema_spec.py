@@ -31,7 +31,7 @@ class V1beta3FlowSchemaSpec(BaseModel):
     distinguisher_method: Optional[V1beta3FlowDistinguisherMethod] = Field(default=None, alias="distinguisherMethod")
     matching_precedence: Optional[StrictInt] = Field(default=None, alias="matchingPrecedence", description="`matchingPrecedence` is used to choose among the FlowSchemas that match a given request. The chosen FlowSchema is among those with the numerically lowest (which we take to be logically highest) MatchingPrecedence.  Each MatchingPrecedence value must be ranged in [1,10000]. Note that if the precedence is not specified, it will be set to 1000 as default.")
     priority_level_configuration: V1beta3PriorityLevelConfigurationReference = Field(..., alias="priorityLevelConfiguration")
-    rules: Optional[conlist(V1beta3PolicyRulesWithSubjects)] = Field(default=None, description="`rules` describes which requests will match this flow schema. This FlowSchema matches a request if and only if at least one member of rules matches the request. if it is an empty slice, there will be no requests matching the FlowSchema.")
+    rules: Optional[list[V1beta3PolicyRulesWithSubjects]] = Field(default=None, description="`rules` describes which requests will match this flow schema. This FlowSchema matches a request if and only if at least one member of rules matches the request. if it is an empty slice, there will be no requests matching the FlowSchema.")
     __properties = ["distinguisherMethod", "matchingPrecedence", "priorityLevelConfiguration", "rules"]
 
     class Config:

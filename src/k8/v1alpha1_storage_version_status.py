@@ -28,8 +28,8 @@ class V1alpha1StorageVersionStatus(BaseModel):
     API server instances report the versions they can decode and the version they encode objects to when persisting objects in the backend.  # noqa: E501
     """
     common_encoding_version: Optional[StrictStr] = Field(default=None, alias="commonEncodingVersion", description="If all API server instances agree on the same encoding storage version, then this field is set to that version. Otherwise this field is left empty. API servers should finish updating its storageVersionStatus entry before serving write operations, so that this field will be in sync with the reality.")
-    conditions: Optional[conlist(V1alpha1StorageVersionCondition)] = Field(default=None, description="The latest available observations of the storageVersion's state.")
-    storage_versions: Optional[conlist(V1alpha1ServerStorageVersion)] = Field(default=None, alias="storageVersions", description="The reported versions per API server instance.")
+    conditions: Optional[list[V1alpha1StorageVersionCondition]] = Field(default=None, description="The latest available observations of the storageVersion's state.")
+    storage_versions: Optional[list[V1alpha1ServerStorageVersion]] = Field(default=None, alias="storageVersions", description="The reported versions per API server instance.")
     __properties = ["commonEncodingVersion", "conditions", "storageVersions"]
 
     class Config:

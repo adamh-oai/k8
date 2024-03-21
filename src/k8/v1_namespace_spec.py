@@ -25,7 +25,7 @@ class V1NamespaceSpec(BaseModel):
     """
     NamespaceSpec describes the attributes on a Namespace.  # noqa: E501
     """
-    finalizers: Optional[conlist(StrictStr)] = Field(default=None, description="Finalizers is an opaque list of values that must be empty to permanently remove object from storage. More info: https://kubernetes.io/docs/tasks/administer-cluster/namespaces/")
+    finalizers: Optional[list[StrictStr]] = Field(default=None, description="Finalizers is an opaque list of values that must be empty to permanently remove object from storage. More info: https://kubernetes.io/docs/tasks/administer-cluster/namespaces/")
     __properties = ["finalizers"]
 
     class Config:

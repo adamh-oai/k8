@@ -26,7 +26,7 @@ class V1CSINodeSpec(BaseModel):
     """
     CSINodeSpec holds information about the specification of all CSI drivers installed on a node  # noqa: E501
     """
-    drivers: conlist(V1CSINodeDriver) = Field(..., description="drivers is a list of information of all CSI Drivers existing on a node. If all drivers in the list are uninstalled, this can become empty.")
+    drivers: list[V1CSINodeDriver] = Field(..., description="drivers is a list of information of all CSI Drivers existing on a node. If all drivers in the list are uninstalled, this can become empty.")
     __properties = ["drivers"]
 
     class Config:

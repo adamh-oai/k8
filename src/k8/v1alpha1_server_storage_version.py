@@ -26,9 +26,9 @@ class V1alpha1ServerStorageVersion(BaseModel):
     An API server instance reports the version it can decode and the version it encodes objects to when persisting objects in the backend.  # noqa: E501
     """
     api_server_id: Optional[StrictStr] = Field(default=None, alias="apiServerID", description="The ID of the reporting API server.")
-    decodable_versions: Optional[conlist(StrictStr)] = Field(default=None, alias="decodableVersions", description="The API server can decode objects encoded in these versions. The encodingVersion must be included in the decodableVersions.")
+    decodable_versions: Optional[list[StrictStr]] = Field(default=None, alias="decodableVersions", description="The API server can decode objects encoded in these versions. The encodingVersion must be included in the decodableVersions.")
     encoding_version: Optional[StrictStr] = Field(default=None, alias="encodingVersion", description="The API server encodes the object to this version when persisting it in the backend (e.g., etcd).")
-    served_versions: Optional[conlist(StrictStr)] = Field(default=None, alias="servedVersions", description="The API server can serve these versions. DecodableVersions must include all ServedVersions.")
+    served_versions: Optional[list[StrictStr]] = Field(default=None, alias="servedVersions", description="The API server can serve these versions. DecodableVersions must include all ServedVersions.")
     __properties = ["apiServerID", "decodableVersions", "encodingVersion", "servedVersions"]
 
     class Config:

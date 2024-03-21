@@ -27,8 +27,8 @@ class V1SubjectAccessReviewSpec(BaseModel):
     """
     SubjectAccessReviewSpec is a description of the access request.  Exactly one of ResourceAuthorizationAttributes and NonResourceAuthorizationAttributes must be set  # noqa: E501
     """
-    extra: Optional[Dict[str, conlist(StrictStr)]] = Field(default=None, description="Extra corresponds to the user.Info.GetExtra() method from the authenticator.  Since that is input to the authorizer it needs a reflection here.")
-    groups: Optional[conlist(StrictStr)] = Field(default=None, description="Groups is the groups you're testing for.")
+    extra: Optional[Dict[str, list[StrictStr]]] = Field(default=None, description="Extra corresponds to the user.Info.GetExtra() method from the authenticator.  Since that is input to the authorizer it needs a reflection here.")
+    groups: Optional[list[StrictStr]] = Field(default=None, description="Groups is the groups you're testing for.")
     non_resource_attributes: Optional[V1NonResourceAttributes] = Field(default=None, alias="nonResourceAttributes")
     resource_attributes: Optional[V1ResourceAttributes] = Field(default=None, alias="resourceAttributes")
     uid: Optional[StrictStr] = Field(default=None, description="UID information about the requesting user.")

@@ -28,8 +28,8 @@ class V1CustomResourceDefinitionStatus(BaseModel):
     CustomResourceDefinitionStatus indicates the state of the CustomResourceDefinition  # noqa: E501
     """
     accepted_names: Optional[V1CustomResourceDefinitionNames] = Field(default=None, alias="acceptedNames")
-    conditions: Optional[conlist(V1CustomResourceDefinitionCondition)] = Field(default=None, description="conditions indicate state for particular aspects of a CustomResourceDefinition")
-    stored_versions: Optional[conlist(StrictStr)] = Field(default=None, alias="storedVersions", description="storedVersions lists all versions of CustomResources that were ever persisted. Tracking these versions allows a migration path for stored versions in etcd. The field is mutable so a migration controller can finish a migration to another version (ensuring no old objects are left in storage), and then remove the rest of the versions from this list. Versions may not be removed from `spec.versions` while they exist in this list.")
+    conditions: Optional[list[V1CustomResourceDefinitionCondition]] = Field(default=None, description="conditions indicate state for particular aspects of a CustomResourceDefinition")
+    stored_versions: Optional[list[StrictStr]] = Field(default=None, alias="storedVersions", description="storedVersions lists all versions of CustomResources that were ever persisted. Tracking these versions allows a migration path for stored versions in etcd. The field is mutable so a migration controller can finish a migration to another version (ensuring no old objects are left in storage), and then remove the rest of the versions from this list. Versions may not be removed from `spec.versions` while they exist in this list.")
     __properties = ["acceptedNames", "conditions", "storedVersions"]
 
     class Config:

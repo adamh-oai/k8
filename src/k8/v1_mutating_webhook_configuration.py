@@ -30,7 +30,7 @@ class V1MutatingWebhookConfiguration(BaseModel):
     api_version: Optional[StrictStr] = Field(default=None, alias="apiVersion", description="APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources")
     kind: Optional[StrictStr] = Field(default=None, description="Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds")
     metadata: Optional[V1ObjectMeta] = None
-    webhooks: Optional[conlist(V1MutatingWebhook)] = Field(default=None, description="Webhooks is a list of webhooks and the affected resources and operations.")
+    webhooks: Optional[list[V1MutatingWebhook]] = Field(default=None, description="Webhooks is a list of webhooks and the affected resources and operations.")
     __properties = ["apiVersion", "kind", "metadata", "webhooks"]
 
     class Config:

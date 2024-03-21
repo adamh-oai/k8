@@ -27,7 +27,7 @@ class V1LabelSelectorRequirement(BaseModel):
     """
     key: StrictStr = Field(..., description="key is the label key that the selector applies to.")
     operator: StrictStr = Field(..., description="operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.")
-    values: Optional[conlist(StrictStr)] = Field(default=None, description="values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.")
+    values: Optional[list[StrictStr]] = Field(default=None, description="values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.")
     __properties = ["key", "operator", "values"]
 
     class Config:

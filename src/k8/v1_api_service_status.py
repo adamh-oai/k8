@@ -26,7 +26,7 @@ class V1APIServiceStatus(BaseModel):
     """
     APIServiceStatus contains derived information about an API server  # noqa: E501
     """
-    conditions: Optional[conlist(V1APIServiceCondition)] = Field(default=None, description="Current service state of apiService.")
+    conditions: Optional[list[V1APIServiceCondition]] = Field(default=None, description="Current service state of apiService.")
     __properties = ["conditions"]
 
     class Config:
