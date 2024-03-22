@@ -18,7 +18,7 @@ import re  # noqa: F401
 import json
 
 
-from typing import Any, Dict, List, Optional
+from typing import List, Optional
 from pydantic import BaseModel, Field, StrictStr, conlist
 from .v1_http_header import V1HTTPHeader
 
@@ -29,7 +29,7 @@ class V1HTTPGetAction(BaseModel):
     host: Optional[StrictStr] = Field(default=None, description="Host name to connect to, defaults to the pod IP. You probably want to set \"Host\" in httpHeaders instead.")
     http_headers: Optional[list[V1HTTPHeader]] = Field(default=None, alias="httpHeaders", description="Custom headers to set in the request. HTTP allows repeated headers.")
     path: Optional[StrictStr] = Field(default=None, description="Path to access on the HTTP server.")
-    port: Dict[str, Any] = Field(..., description="Name or number of the port to access on the container. Number must be in the range 1 to 65535. Name must be an IANA_SVC_NAME.")
+    port: StrictStr = Field(..., description="Name or number of the port to access on the container. Number must be in the range 1 to 65535. Name must be an IANA_SVC_NAME.")
     scheme: Optional[StrictStr] = Field(default=None, description="Scheme to use for connecting to the host. Defaults to HTTP.")
     __properties = ["host", "httpHeaders", "path", "port", "scheme"]
 

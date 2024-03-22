@@ -5,7 +5,7 @@ GEN_DIR=$(mktemp -d 2>/dev/null || mktemp -d -t 'k8')
 
 echo "Generating full client from OpenAPI spec..."
 npx @openapitools/openapi-generator-cli generate \
-    -i https://raw.githubusercontent.com/kubernetes-client/python/release-29.0/scripts/swagger.json \
+    -i $SCRIPT_DIR/swagger.json \
     -o $GEN_DIR \
     -g python-pydantic-v1 \
     -c $SCRIPT_DIR/config.json \

@@ -18,7 +18,7 @@ import re  # noqa: F401
 import json
 
 
-from typing import Any, Dict, Optional
+from typing import Optional
 from pydantic import BaseModel, Field, StrictStr
 
 class V1TCPSocketAction(BaseModel):
@@ -26,7 +26,7 @@ class V1TCPSocketAction(BaseModel):
     TCPSocketAction describes an action based on opening a socket  # noqa: E501
     """
     host: Optional[StrictStr] = Field(default=None, description="Optional: Host name to connect to, defaults to the pod IP.")
-    port: Dict[str, Any] = Field(..., description="Number or name of the port to access on the container. Number must be in the range 1 to 65535. Name must be an IANA_SVC_NAME.")
+    port: StrictStr = Field(..., description="Number or name of the port to access on the container. Number must be in the range 1 to 65535. Name must be an IANA_SVC_NAME.")
     __properties = ["host", "port"]
 
     class Config:

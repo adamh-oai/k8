@@ -18,7 +18,7 @@ import re  # noqa: F401
 import json
 
 
-from typing import Any, Dict, Optional
+from typing import Optional
 from pydantic import BaseModel, Field, StrictInt, StrictStr
 
 class V1ServicePort(BaseModel):
@@ -30,7 +30,7 @@ class V1ServicePort(BaseModel):
     node_port: Optional[StrictInt] = Field(default=None, alias="nodePort", description="The port on each node on which this service is exposed when type is NodePort or LoadBalancer.  Usually assigned by the system. If a value is specified, in-range, and not in use it will be used, otherwise the operation will fail.  If not specified, a port will be allocated if this Service requires one.  If this field is specified when creating a Service which does not need it, creation will fail. This field will be wiped when updating a Service to no longer need it (e.g. changing type from NodePort to ClusterIP). More info: https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport")
     port: StrictInt = Field(..., description="The port that will be exposed by this service.")
     protocol: Optional[StrictStr] = Field(default=None, description="The IP protocol for this port. Supports \"TCP\", \"UDP\", and \"SCTP\". Default is TCP.")
-    target_port: Optional[Dict[str, Any]] = Field(default=None, alias="targetPort", description="Number or name of the port to access on the pods targeted by the service. Number must be in the range 1 to 65535. Name must be an IANA_SVC_NAME. If this is a string, it will be looked up as a named port in the target Pod's container ports. If this is not specified, the value of the 'port' field is used (an identity map). This field is ignored for services with clusterIP=None, and should be omitted or set equal to the 'port' field. More info: https://kubernetes.io/docs/concepts/services-networking/service/#defining-a-service")
+    target_port: Optional[StrictStr] = Field(default=None, alias="targetPort", description="Number or name of the port to access on the pods targeted by the service. Number must be in the range 1 to 65535. Name must be an IANA_SVC_NAME. If this is a string, it will be looked up as a named port in the target Pod's container ports. If this is not specified, the value of the 'port' field is used (an identity map). This field is ignored for services with clusterIP=None, and should be omitted or set equal to the 'port' field. More info: https://kubernetes.io/docs/concepts/services-networking/service/#defining-a-service")
     __properties = ["appProtocol", "name", "nodePort", "port", "protocol", "targetPort"]
 
     class Config:
