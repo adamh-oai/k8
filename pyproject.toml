@@ -1,6 +1,6 @@
 [project]
 name = "k8"
-version = "29.0.5" # Note, should match kubernetes-client/python in refresh.sh
+version = "29.0.6" # Note, should match kubernetes-client/python in refresh.sh
 authors = [
   { name="Nick Cooper", email="nick@not.fun" },
 ]
