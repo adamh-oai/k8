@@ -14,7 +14,7 @@ classifiers = [
 ]
 keywords = ["OpenAPI", "OpenAPI-Generator", "Kubernetes"]
 dependencies = [
-  "pydantic>=1.10.5,<2",
+  "pydantic>=2",
   "aenum>=3.1.11",
 ]
 
