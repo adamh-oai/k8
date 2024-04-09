@@ -17,46 +17,65 @@ import pprint
 import re  # noqa: F401
 import json
 
-
-from typing import List, Optional
-from pydantic import BaseModel, Field, StrictStr, conlist
+from pydantic import BaseModel, ConfigDict, Field, StrictStr
+from typing import Any, ClassVar, Dict, List, Optional
 from .v1_http_header import V1HTTPHeader
+from typing import Optional, Set
+from typing_extensions import Self
 
 class V1HTTPGetAction(BaseModel):
     """
-    HTTPGetAction describes an action based on HTTP Get requests.  # noqa: E501
-    """
+    HTTPGetAction describes an action based on HTTP Get requests.
+    """ # noqa: E501
     host: Optional[StrictStr] = Field(default=None, description="Host name to connect to, defaults to the pod IP. You probably want to set \"Host\" in httpHeaders instead.")
-    http_headers: Optional[list[V1HTTPHeader]] = Field(default=None, alias="httpHeaders", description="Custom headers to set in the request. HTTP allows repeated headers.")
+    http_headers: Optional[List[V1HTTPHeader]] = Field(default=None, description="Custom headers to set in the request. HTTP allows repeated headers.", alias="httpHeaders")
     path: Optional[StrictStr] = Field(default=None, description="Path to access on the HTTP server.")
-    port: StrictStr = Field(..., description="Name or number of the port to access on the container. Number must be in the range 1 to 65535. Name must be an IANA_SVC_NAME.")
+    port: Dict[str, Any] = Field(description="It's an int or a string.")
     scheme: Optional[StrictStr] = Field(default=None, description="Scheme to use for connecting to the host. Defaults to HTTP.")
-    __properties = ["host", "httpHeaders", "path", "port", "scheme"]
+    additional_properties: Dict[str, Any] = {}
+    __properties: ClassVar[List[str]] = ["host", "httpHeaders", "path", "port", "scheme"]
 
-    class Config:
-        """Pydantic configuration"""
-        allow_population_by_field_name = True
-        validate_assignment = True
+    model_config = ConfigDict(
+        populate_by_name=True,
+        validate_assignment=True,
+        protected_namespaces=(),
+    )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
-        return pprint.pformat(self.dict(by_alias=True))
+        return pprint.pformat(self.model_dump(by_alias=True))
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> V1HTTPGetAction:
+    def from_json(cls, json_str: str) -> Optional[Self]:
         """Create an instance of V1HTTPGetAction from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.dict(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        * Fields in `self.additional_properties` are added to the output dict.
+        """
+        excluded_fields: Set[str] = set([
+            "additional_properties",
+        ])
+
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude=excluded_fields,
+            exclude_none=True,
+        )
         # override the default output from pydantic by calling `to_dict()` of each item in http_headers (list)
         _items = []
         if self.http_headers:
@@ -64,24 +83,34 @@ class V1HTTPGetAction(BaseModel):
                 if _item:
                     _items.append(_item.to_dict())
             _dict['httpHeaders'] = _items
+        # puts key-value pairs in additional_properties in the top level
+        if self.additional_properties is not None:
+            for _key, _value in self.additional_properties.items():
+                _dict[_key] = _value
+
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> V1HTTPGetAction:
+    def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
         """Create an instance of V1HTTPGetAction from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return V1HTTPGetAction.parse_obj(obj)
+            return cls.model_validate(obj)
 
-        _obj = V1HTTPGetAction.parse_obj({
+        _obj = cls.model_validate({
             "host": obj.get("host"),
-            "http_headers": [V1HTTPHeader.from_dict(_item) for _item in obj.get("httpHeaders")] if obj.get("httpHeaders") is not None else None,
+            "httpHeaders": [V1HTTPHeader.from_dict(_item) for _item in obj["httpHeaders"]] if obj.get("httpHeaders") is not None else None,
             "path": obj.get("path"),
             "port": obj.get("port"),
             "scheme": obj.get("scheme")
         })
+        # store additional fields in additional_properties
+        for _key in obj.keys():
+            if _key not in cls.__properties:
+                _obj.additional_properties[_key] = obj.get(_key)
+
         return _obj
 
 

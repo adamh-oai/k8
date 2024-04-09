@@ -18,62 +18,92 @@ import re  # noqa: F401
 import json
 
 from datetime import datetime
-from typing import Optional
-from pydantic import BaseModel, Field, StrictInt, StrictStr
+from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr
+from typing import Any, ClassVar, Dict, List, Optional
+from typing import Optional, Set
+from typing_extensions import Self
 
 class V1LeaseSpec(BaseModel):
     """
-    LeaseSpec is a specification of a Lease.  # noqa: E501
-    """
-    acquire_time: Optional[datetime] = Field(default=None, alias="acquireTime", description="acquireTime is a time when the current lease was acquired.")
-    holder_identity: Optional[StrictStr] = Field(default=None, alias="holderIdentity", description="holderIdentity contains the identity of the holder of a current lease.")
-    lease_duration_seconds: Optional[StrictInt] = Field(default=None, alias="leaseDurationSeconds", description="leaseDurationSeconds is a duration that candidates for a lease need to wait to force acquire it. This is measure against time of last observed renewTime.")
-    lease_transitions: Optional[StrictInt] = Field(default=None, alias="leaseTransitions", description="leaseTransitions is the number of transitions of a lease between holders.")
-    renew_time: Optional[datetime] = Field(default=None, alias="renewTime", description="renewTime is a time when the current holder of a lease has last updated the lease.")
-    __properties = ["acquireTime", "holderIdentity", "leaseDurationSeconds", "leaseTransitions", "renewTime"]
+    LeaseSpec is a specification of a Lease.
+    """ # noqa: E501
+    acquire_time: Optional[datetime] = Field(default=None, description="acquireTime is a time when the current lease was acquired.", alias="acquireTime")
+    holder_identity: Optional[StrictStr] = Field(default=None, description="holderIdentity contains the identity of the holder of a current lease.", alias="holderIdentity")
+    lease_duration_seconds: Optional[StrictInt] = Field(default=None, description="leaseDurationSeconds is a duration that candidates for a lease need to wait to force acquire it. This is measure against time of last observed renewTime.", alias="leaseDurationSeconds")
+    lease_transitions: Optional[StrictInt] = Field(default=None, description="leaseTransitions is the number of transitions of a lease between holders.", alias="leaseTransitions")
+    renew_time: Optional[datetime] = Field(default=None, description="renewTime is a time when the current holder of a lease has last updated the lease.", alias="renewTime")
+    additional_properties: Dict[str, Any] = {}
+    __properties: ClassVar[List[str]] = ["acquireTime", "holderIdentity", "leaseDurationSeconds", "leaseTransitions", "renewTime"]
 
-    class Config:
-        """Pydantic configuration"""
-        allow_population_by_field_name = True
-        validate_assignment = True
+    model_config = ConfigDict(
+        populate_by_name=True,
+        validate_assignment=True,
+        protected_namespaces=(),
+    )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
-        return pprint.pformat(self.dict(by_alias=True))
+        return pprint.pformat(self.model_dump(by_alias=True))
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> V1LeaseSpec:
+    def from_json(cls, json_str: str) -> Optional[Self]:
         """Create an instance of V1LeaseSpec from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.dict(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        * Fields in `self.additional_properties` are added to the output dict.
+        """
+        excluded_fields: Set[str] = set([
+            "additional_properties",
+        ])
+
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude=excluded_fields,
+            exclude_none=True,
+        )
+        # puts key-value pairs in additional_properties in the top level
+        if self.additional_properties is not None:
+            for _key, _value in self.additional_properties.items():
+                _dict[_key] = _value
+
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> V1LeaseSpec:
+    def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
         """Create an instance of V1LeaseSpec from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return V1LeaseSpec.parse_obj(obj)
+            return cls.model_validate(obj)
 
-        _obj = V1LeaseSpec.parse_obj({
-            "acquire_time": obj.get("acquireTime"),
-            "holder_identity": obj.get("holderIdentity"),
-            "lease_duration_seconds": obj.get("leaseDurationSeconds"),
-            "lease_transitions": obj.get("leaseTransitions"),
-            "renew_time": obj.get("renewTime")
+        _obj = cls.model_validate({
+            "acquireTime": obj.get("acquireTime"),
+            "holderIdentity": obj.get("holderIdentity"),
+            "leaseDurationSeconds": obj.get("leaseDurationSeconds"),
+            "leaseTransitions": obj.get("leaseTransitions"),
+            "renewTime": obj.get("renewTime")
         })
+        # store additional fields in additional_properties
+        for _key in obj.keys():
+            if _key not in cls.__properties:
+                _obj.additional_properties[_key] = obj.get(_key)
+
         return _obj
 
 

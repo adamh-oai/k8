@@ -17,9 +17,8 @@ import pprint
 import re  # noqa: F401
 import json
 
-
-from typing import Optional
-from pydantic import BaseModel, Field, StrictStr
+from pydantic import BaseModel, ConfigDict, Field, StrictStr
+from typing import Any, ClassVar, Dict, List, Optional
 from .v1_aws_elastic_block_store_volume_source import V1AWSElasticBlockStoreVolumeSource
 from .v1_azure_disk_volume_source import V1AzureDiskVolumeSource
 from .v1_azure_file_volume_source import V1AzureFileVolumeSource
@@ -49,11 +48,13 @@ from .v1_scale_io_volume_source import V1ScaleIOVolumeSource
 from .v1_secret_volume_source import V1SecretVolumeSource
 from .v1_storage_os_volume_source import V1StorageOSVolumeSource
 from .v1_vsphere_virtual_disk_volume_source import V1VsphereVirtualDiskVolumeSource
+from typing import Optional, Set
+from typing_extensions import Self
 
 class V1Volume(BaseModel):
     """
-    Volume represents a named volume in a pod that may be accessed by any container in the pod.  # noqa: E501
-    """
+    Volume represents a named volume in a pod that may be accessed by any container in the pod.
+    """ # noqa: E501
     aws_elastic_block_store: Optional[V1AWSElasticBlockStoreVolumeSource] = Field(default=None, alias="awsElasticBlockStore")
     azure_disk: Optional[V1AzureDiskVolumeSource] = Field(default=None, alias="azureDisk")
     azure_file: Optional[V1AzureFileVolumeSource] = Field(default=None, alias="azureFile")
@@ -72,7 +73,7 @@ class V1Volume(BaseModel):
     glusterfs: Optional[V1GlusterfsVolumeSource] = None
     host_path: Optional[V1HostPathVolumeSource] = Field(default=None, alias="hostPath")
     iscsi: Optional[V1ISCSIVolumeSource] = None
-    name: StrictStr = Field(..., description="name of the volume. Must be a DNS_LABEL and unique within the pod. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names")
+    name: StrictStr = Field(description="name of the volume. Must be a DNS_LABEL and unique within the pod. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names")
     nfs: Optional[V1NFSVolumeSource] = None
     persistent_volume_claim: Optional[V1PersistentVolumeClaimVolumeSource] = Field(default=None, alias="persistentVolumeClaim")
     photon_persistent_disk: Optional[V1PhotonPersistentDiskVolumeSource] = Field(default=None, alias="photonPersistentDisk")
@@ -84,32 +85,50 @@ class V1Volume(BaseModel):
     secret: Optional[V1SecretVolumeSource] = None
     storageos: Optional[V1StorageOSVolumeSource] = None
     vsphere_volume: Optional[V1VsphereVirtualDiskVolumeSource] = Field(default=None, alias="vsphereVolume")
-    __properties = ["awsElasticBlockStore", "azureDisk", "azureFile", "cephfs", "cinder", "configMap", "csi", "downwardAPI", "emptyDir", "ephemeral", "fc", "flexVolume", "flocker", "gcePersistentDisk", "gitRepo", "glusterfs", "hostPath", "iscsi", "name", "nfs", "persistentVolumeClaim", "photonPersistentDisk", "portworxVolume", "projected", "quobyte", "rbd", "scaleIO", "secret", "storageos", "vsphereVolume"]
+    additional_properties: Dict[str, Any] = {}
+    __properties: ClassVar[List[str]] = ["awsElasticBlockStore", "azureDisk", "azureFile", "cephfs", "cinder", "configMap", "csi", "downwardAPI", "emptyDir", "ephemeral", "fc", "flexVolume", "flocker", "gcePersistentDisk", "gitRepo", "glusterfs", "hostPath", "iscsi", "name", "nfs", "persistentVolumeClaim", "photonPersistentDisk", "portworxVolume", "projected", "quobyte", "rbd", "scaleIO", "secret", "storageos", "vsphereVolume"]
 
-    class Config:
-        """Pydantic configuration"""
-        allow_population_by_field_name = True
-        validate_assignment = True
+    model_config = ConfigDict(
+        populate_by_name=True,
+        validate_assignment=True,
+        protected_namespaces=(),
+    )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
-        return pprint.pformat(self.dict(by_alias=True))
+        return pprint.pformat(self.model_dump(by_alias=True))
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> V1Volume:
+    def from_json(cls, json_str: str) -> Optional[Self]:
         """Create an instance of V1Volume from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.dict(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        * Fields in `self.additional_properties` are added to the output dict.
+        """
+        excluded_fields: Set[str] = set([
+            "additional_properties",
+        ])
+
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude=excluded_fields,
+            exclude_none=True,
+        )
         # override the default output from pydantic by calling `to_dict()` of aws_elastic_block_store
         if self.aws_elastic_block_store:
             _dict['awsElasticBlockStore'] = self.aws_elastic_block_store.to_dict()
@@ -197,49 +216,59 @@ class V1Volume(BaseModel):
         # override the default output from pydantic by calling `to_dict()` of vsphere_volume
         if self.vsphere_volume:
             _dict['vsphereVolume'] = self.vsphere_volume.to_dict()
+        # puts key-value pairs in additional_properties in the top level
+        if self.additional_properties is not None:
+            for _key, _value in self.additional_properties.items():
+                _dict[_key] = _value
+
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> V1Volume:
+    def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
         """Create an instance of V1Volume from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return V1Volume.parse_obj(obj)
+            return cls.model_validate(obj)
 
-        _obj = V1Volume.parse_obj({
-            "aws_elastic_block_store": V1AWSElasticBlockStoreVolumeSource.from_dict(obj.get("awsElasticBlockStore")) if obj.get("awsElasticBlockStore") is not None else None,
-            "azure_disk": V1AzureDiskVolumeSource.from_dict(obj.get("azureDisk")) if obj.get("azureDisk") is not None else None,
-            "azure_file": V1AzureFileVolumeSource.from_dict(obj.get("azureFile")) if obj.get("azureFile") is not None else None,
-            "cephfs": V1CephFSVolumeSource.from_dict(obj.get("cephfs")) if obj.get("cephfs") is not None else None,
-            "cinder": V1CinderVolumeSource.from_dict(obj.get("cinder")) if obj.get("cinder") is not None else None,
-            "config_map": V1ConfigMapVolumeSource.from_dict(obj.get("configMap")) if obj.get("configMap") is not None else None,
-            "csi": V1CSIVolumeSource.from_dict(obj.get("csi")) if obj.get("csi") is not None else None,
-            "downward_api": V1DownwardAPIVolumeSource.from_dict(obj.get("downwardAPI")) if obj.get("downwardAPI") is not None else None,
-            "empty_dir": V1EmptyDirVolumeSource.from_dict(obj.get("emptyDir")) if obj.get("emptyDir") is not None else None,
-            "ephemeral": V1EphemeralVolumeSource.from_dict(obj.get("ephemeral")) if obj.get("ephemeral") is not None else None,
-            "fc": V1FCVolumeSource.from_dict(obj.get("fc")) if obj.get("fc") is not None else None,
-            "flex_volume": V1FlexVolumeSource.from_dict(obj.get("flexVolume")) if obj.get("flexVolume") is not None else None,
-            "flocker": V1FlockerVolumeSource.from_dict(obj.get("flocker")) if obj.get("flocker") is not None else None,
-            "gce_persistent_disk": V1GCEPersistentDiskVolumeSource.from_dict(obj.get("gcePersistentDisk")) if obj.get("gcePersistentDisk") is not None else None,
-            "git_repo": V1GitRepoVolumeSource.from_dict(obj.get("gitRepo")) if obj.get("gitRepo") is not None else None,
-            "glusterfs": V1GlusterfsVolumeSource.from_dict(obj.get("glusterfs")) if obj.get("glusterfs") is not None else None,
-            "host_path": V1HostPathVolumeSource.from_dict(obj.get("hostPath")) if obj.get("hostPath") is not None else None,
-            "iscsi": V1ISCSIVolumeSource.from_dict(obj.get("iscsi")) if obj.get("iscsi") is not None else None,
+        _obj = cls.model_validate({
+            "awsElasticBlockStore": V1AWSElasticBlockStoreVolumeSource.from_dict(obj["awsElasticBlockStore"]) if obj.get("awsElasticBlockStore") is not None else None,
+            "azureDisk": V1AzureDiskVolumeSource.from_dict(obj["azureDisk"]) if obj.get("azureDisk") is not None else None,
+            "azureFile": V1AzureFileVolumeSource.from_dict(obj["azureFile"]) if obj.get("azureFile") is not None else None,
+            "cephfs": V1CephFSVolumeSource.from_dict(obj["cephfs"]) if obj.get("cephfs") is not None else None,
+            "cinder": V1CinderVolumeSource.from_dict(obj["cinder"]) if obj.get("cinder") is not None else None,
+            "configMap": V1ConfigMapVolumeSource.from_dict(obj["configMap"]) if obj.get("configMap") is not None else None,
+            "csi": V1CSIVolumeSource.from_dict(obj["csi"]) if obj.get("csi") is not None else None,
+            "downwardAPI": V1DownwardAPIVolumeSource.from_dict(obj["downwardAPI"]) if obj.get("downwardAPI") is not None else None,
+            "emptyDir": V1EmptyDirVolumeSource.from_dict(obj["emptyDir"]) if obj.get("emptyDir") is not None else None,
+            "ephemeral": V1EphemeralVolumeSource.from_dict(obj["ephemeral"]) if obj.get("ephemeral") is not None else None,
+            "fc": V1FCVolumeSource.from_dict(obj["fc"]) if obj.get("fc") is not None else None,
+            "flexVolume": V1FlexVolumeSource.from_dict(obj["flexVolume"]) if obj.get("flexVolume") is not None else None,
+            "flocker": V1FlockerVolumeSource.from_dict(obj["flocker"]) if obj.get("flocker") is not None else None,
+            "gcePersistentDisk": V1GCEPersistentDiskVolumeSource.from_dict(obj["gcePersistentDisk"]) if obj.get("gcePersistentDisk") is not None else None,
+            "gitRepo": V1GitRepoVolumeSource.from_dict(obj["gitRepo"]) if obj.get("gitRepo") is not None else None,
+            "glusterfs": V1GlusterfsVolumeSource.from_dict(obj["glusterfs"]) if obj.get("glusterfs") is not None else None,
+            "hostPath": V1HostPathVolumeSource.from_dict(obj["hostPath"]) if obj.get("hostPath") is not None else None,
+            "iscsi": V1ISCSIVolumeSource.from_dict(obj["iscsi"]) if obj.get("iscsi") is not None else None,
             "name": obj.get("name"),
-            "nfs": V1NFSVolumeSource.from_dict(obj.get("nfs")) if obj.get("nfs") is not None else None,
-            "persistent_volume_claim": V1PersistentVolumeClaimVolumeSource.from_dict(obj.get("persistentVolumeClaim")) if obj.get("persistentVolumeClaim") is not None else None,
-            "photon_persistent_disk": V1PhotonPersistentDiskVolumeSource.from_dict(obj.get("photonPersistentDisk")) if obj.get("photonPersistentDisk") is not None else None,
-            "portworx_volume": V1PortworxVolumeSource.from_dict(obj.get("portworxVolume")) if obj.get("portworxVolume") is not None else None,
-            "projected": V1ProjectedVolumeSource.from_dict(obj.get("projected")) if obj.get("projected") is not None else None,
-            "quobyte": V1QuobyteVolumeSource.from_dict(obj.get("quobyte")) if obj.get("quobyte") is not None else None,
-            "rbd": V1RBDVolumeSource.from_dict(obj.get("rbd")) if obj.get("rbd") is not None else None,
-            "scale_io": V1ScaleIOVolumeSource.from_dict(obj.get("scaleIO")) if obj.get("scaleIO") is not None else None,
-            "secret": V1SecretVolumeSource.from_dict(obj.get("secret")) if obj.get("secret") is not None else None,
-            "storageos": V1StorageOSVolumeSource.from_dict(obj.get("storageos")) if obj.get("storageos") is not None else None,
-            "vsphere_volume": V1VsphereVirtualDiskVolumeSource.from_dict(obj.get("vsphereVolume")) if obj.get("vsphereVolume") is not None else None
+            "nfs": V1NFSVolumeSource.from_dict(obj["nfs"]) if obj.get("nfs") is not None else None,
+            "persistentVolumeClaim": V1PersistentVolumeClaimVolumeSource.from_dict(obj["persistentVolumeClaim"]) if obj.get("persistentVolumeClaim") is not None else None,
+            "photonPersistentDisk": V1PhotonPersistentDiskVolumeSource.from_dict(obj["photonPersistentDisk"]) if obj.get("photonPersistentDisk") is not None else None,
+            "portworxVolume": V1PortworxVolumeSource.from_dict(obj["portworxVolume"]) if obj.get("portworxVolume") is not None else None,
+            "projected": V1ProjectedVolumeSource.from_dict(obj["projected"]) if obj.get("projected") is not None else None,
+            "quobyte": V1QuobyteVolumeSource.from_dict(obj["quobyte"]) if obj.get("quobyte") is not None else None,
+            "rbd": V1RBDVolumeSource.from_dict(obj["rbd"]) if obj.get("rbd") is not None else None,
+            "scaleIO": V1ScaleIOVolumeSource.from_dict(obj["scaleIO"]) if obj.get("scaleIO") is not None else None,
+            "secret": V1SecretVolumeSource.from_dict(obj["secret"]) if obj.get("secret") is not None else None,
+            "storageos": V1StorageOSVolumeSource.from_dict(obj["storageos"]) if obj.get("storageos") is not None else None,
+            "vsphereVolume": V1VsphereVirtualDiskVolumeSource.from_dict(obj["vsphereVolume"]) if obj.get("vsphereVolume") is not None else None
         })
+        # store additional fields in additional_properties
+        for _key in obj.keys():
+            if _key not in cls.__properties:
+                _obj.additional_properties[_key] = obj.get(_key)
+
         return _obj
 
 

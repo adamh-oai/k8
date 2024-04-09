@@ -17,48 +17,67 @@ import pprint
 import re  # noqa: F401
 import json
 
-
-from typing import List, Optional
-from pydantic import BaseModel, Field, StrictStr, conlist
+from pydantic import BaseModel, ConfigDict, Field, StrictStr
+from typing import Any, ClassVar, Dict, List, Optional
 from .v1_group_version_for_discovery import V1GroupVersionForDiscovery
 from .v1_server_address_by_client_cidr import V1ServerAddressByClientCIDR
+from typing import Optional, Set
+from typing_extensions import Self
 
 class V1APIGroup(BaseModel):
     """
-    APIGroup contains the name, the supported versions, and the preferred version of a group.  # noqa: E501
-    """
-    api_version: Optional[StrictStr] = Field(default=None, alias="apiVersion", description="APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources")
+    APIGroup contains the name, the supported versions, and the preferred version of a group.
+    """ # noqa: E501
+    api_version: Optional[StrictStr] = Field(default=None, description="APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources", alias="apiVersion")
     kind: Optional[StrictStr] = Field(default=None, description="Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds")
-    name: StrictStr = Field(..., description="name is the name of the group.")
+    name: StrictStr = Field(description="name is the name of the group.")
     preferred_version: Optional[V1GroupVersionForDiscovery] = Field(default=None, alias="preferredVersion")
-    server_address_by_client_cidrs: Optional[list[V1ServerAddressByClientCIDR]] = Field(default=None, alias="serverAddressByClientCIDRs", description="a map of client CIDR to server address that is serving this group. This is to help clients reach servers in the most network-efficient way possible. Clients can use the appropriate server address as per the CIDR that they match. In case of multiple matches, clients should use the longest matching CIDR. The server returns only those CIDRs that it thinks that the client can match. For example: the master will return an internal IP CIDR only, if the client reaches the server using an internal IP. Server looks at X-Forwarded-For header or X-Real-Ip header or request.RemoteAddr (in that order) to get the client IP.")
-    versions: list[V1GroupVersionForDiscovery] = Field(..., description="versions are the versions supported in this group.")
-    __properties = ["apiVersion", "kind", "name", "preferredVersion", "serverAddressByClientCIDRs", "versions"]
+    server_address_by_client_cidrs: Optional[List[V1ServerAddressByClientCIDR]] = Field(default=None, description="a map of client CIDR to server address that is serving this group. This is to help clients reach servers in the most network-efficient way possible. Clients can use the appropriate server address as per the CIDR that they match. In case of multiple matches, clients should use the longest matching CIDR. The server returns only those CIDRs that it thinks that the client can match. For example: the master will return an internal IP CIDR only, if the client reaches the server using an internal IP. Server looks at X-Forwarded-For header or X-Real-Ip header or request.RemoteAddr (in that order) to get the client IP.", alias="serverAddressByClientCIDRs")
+    versions: List[V1GroupVersionForDiscovery] = Field(description="versions are the versions supported in this group.")
+    additional_properties: Dict[str, Any] = {}
+    __properties: ClassVar[List[str]] = ["apiVersion", "kind", "name", "preferredVersion", "serverAddressByClientCIDRs", "versions"]
 
-    class Config:
-        """Pydantic configuration"""
-        allow_population_by_field_name = True
-        validate_assignment = True
+    model_config = ConfigDict(
+        populate_by_name=True,
+        validate_assignment=True,
+        protected_namespaces=(),
+    )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
-        return pprint.pformat(self.dict(by_alias=True))
+        return pprint.pformat(self.model_dump(by_alias=True))
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> V1APIGroup:
+    def from_json(cls, json_str: str) -> Optional[Self]:
         """Create an instance of V1APIGroup from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.dict(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        * Fields in `self.additional_properties` are added to the output dict.
+        """
+        excluded_fields: Set[str] = set([
+            "additional_properties",
+        ])
+
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude=excluded_fields,
+            exclude_none=True,
+        )
         # override the default output from pydantic by calling `to_dict()` of preferred_version
         if self.preferred_version:
             _dict['preferredVersion'] = self.preferred_version.to_dict()
@@ -76,25 +95,35 @@ class V1APIGroup(BaseModel):
                 if _item:
                     _items.append(_item.to_dict())
             _dict['versions'] = _items
+        # puts key-value pairs in additional_properties in the top level
+        if self.additional_properties is not None:
+            for _key, _value in self.additional_properties.items():
+                _dict[_key] = _value
+
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> V1APIGroup:
+    def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
         """Create an instance of V1APIGroup from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return V1APIGroup.parse_obj(obj)
+            return cls.model_validate(obj)
 
-        _obj = V1APIGroup.parse_obj({
-            "api_version": obj.get("apiVersion"),
+        _obj = cls.model_validate({
+            "apiVersion": obj.get("apiVersion"),
             "kind": obj.get("kind"),
             "name": obj.get("name"),
-            "preferred_version": V1GroupVersionForDiscovery.from_dict(obj.get("preferredVersion")) if obj.get("preferredVersion") is not None else None,
-            "server_address_by_client_cidrs": [V1ServerAddressByClientCIDR.from_dict(_item) for _item in obj.get("serverAddressByClientCIDRs")] if obj.get("serverAddressByClientCIDRs") is not None else None,
-            "versions": [V1GroupVersionForDiscovery.from_dict(_item) for _item in obj.get("versions")] if obj.get("versions") is not None else None
+            "preferredVersion": V1GroupVersionForDiscovery.from_dict(obj["preferredVersion"]) if obj.get("preferredVersion") is not None else None,
+            "serverAddressByClientCIDRs": [V1ServerAddressByClientCIDR.from_dict(_item) for _item in obj["serverAddressByClientCIDRs"]] if obj.get("serverAddressByClientCIDRs") is not None else None,
+            "versions": [V1GroupVersionForDiscovery.from_dict(_item) for _item in obj["versions"]] if obj.get("versions") is not None else None
         })
+        # store additional fields in additional_properties
+        for _key in obj.keys():
+            if _key not in cls.__properties:
+                _obj.additional_properties[_key] = obj.get(_key)
+
         return _obj
 
 

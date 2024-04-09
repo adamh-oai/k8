@@ -18,47 +18,67 @@ import re  # noqa: F401
 import json
 
 from datetime import datetime
-from typing import List, Optional
-from pydantic import BaseModel, Field, StrictInt, conlist
+from pydantic import BaseModel, ConfigDict, Field, StrictInt
+from typing import Any, ClassVar, Dict, List, Optional
 from .v2_horizontal_pod_autoscaler_condition import V2HorizontalPodAutoscalerCondition
 from .v2_metric_status import V2MetricStatus
+from typing import Optional, Set
+from typing_extensions import Self
 
 class V2HorizontalPodAutoscalerStatus(BaseModel):
     """
-    HorizontalPodAutoscalerStatus describes the current status of a horizontal pod autoscaler.  # noqa: E501
-    """
-    conditions: Optional[list[V2HorizontalPodAutoscalerCondition]] = Field(default=None, description="conditions is the set of conditions required for this autoscaler to scale its target, and indicates whether or not those conditions are met.")
-    current_metrics: Optional[list[V2MetricStatus]] = Field(default=None, alias="currentMetrics", description="currentMetrics is the last read state of the metrics used by this autoscaler.")
-    current_replicas: Optional[StrictInt] = Field(default=None, alias="currentReplicas", description="currentReplicas is current number of replicas of pods managed by this autoscaler, as last seen by the autoscaler.")
-    desired_replicas: StrictInt = Field(..., alias="desiredReplicas", description="desiredReplicas is the desired number of replicas of pods managed by this autoscaler, as last calculated by the autoscaler.")
-    last_scale_time: Optional[datetime] = Field(default=None, alias="lastScaleTime", description="lastScaleTime is the last time the HorizontalPodAutoscaler scaled the number of pods, used by the autoscaler to control how often the number of pods is changed.")
-    observed_generation: Optional[StrictInt] = Field(default=None, alias="observedGeneration", description="observedGeneration is the most recent generation observed by this autoscaler.")
-    __properties = ["conditions", "currentMetrics", "currentReplicas", "desiredReplicas", "lastScaleTime", "observedGeneration"]
+    HorizontalPodAutoscalerStatus describes the current status of a horizontal pod autoscaler.
+    """ # noqa: E501
+    conditions: Optional[List[V2HorizontalPodAutoscalerCondition]] = Field(default=None, description="conditions is the set of conditions required for this autoscaler to scale its target, and indicates whether or not those conditions are met.")
+    current_metrics: Optional[List[V2MetricStatus]] = Field(default=None, description="currentMetrics is the last read state of the metrics used by this autoscaler.", alias="currentMetrics")
+    current_replicas: Optional[StrictInt] = Field(default=None, description="currentReplicas is current number of replicas of pods managed by this autoscaler, as last seen by the autoscaler.", alias="currentReplicas")
+    desired_replicas: StrictInt = Field(description="desiredReplicas is the desired number of replicas of pods managed by this autoscaler, as last calculated by the autoscaler.", alias="desiredReplicas")
+    last_scale_time: Optional[datetime] = Field(default=None, description="lastScaleTime is the last time the HorizontalPodAutoscaler scaled the number of pods, used by the autoscaler to control how often the number of pods is changed.", alias="lastScaleTime")
+    observed_generation: Optional[StrictInt] = Field(default=None, description="observedGeneration is the most recent generation observed by this autoscaler.", alias="observedGeneration")
+    additional_properties: Dict[str, Any] = {}
+    __properties: ClassVar[List[str]] = ["conditions", "currentMetrics", "currentReplicas", "desiredReplicas", "lastScaleTime", "observedGeneration"]
 
-    class Config:
-        """Pydantic configuration"""
-        allow_population_by_field_name = True
-        validate_assignment = True
+    model_config = ConfigDict(
+        populate_by_name=True,
+        validate_assignment=True,
+        protected_namespaces=(),
+    )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
-        return pprint.pformat(self.dict(by_alias=True))
+        return pprint.pformat(self.model_dump(by_alias=True))
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> V2HorizontalPodAutoscalerStatus:
+    def from_json(cls, json_str: str) -> Optional[Self]:
         """Create an instance of V2HorizontalPodAutoscalerStatus from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.dict(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        * Fields in `self.additional_properties` are added to the output dict.
+        """
+        excluded_fields: Set[str] = set([
+            "additional_properties",
+        ])
+
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude=excluded_fields,
+            exclude_none=True,
+        )
         # override the default output from pydantic by calling `to_dict()` of each item in conditions (list)
         _items = []
         if self.conditions:
@@ -73,25 +93,35 @@ class V2HorizontalPodAutoscalerStatus(BaseModel):
                 if _item:
                     _items.append(_item.to_dict())
             _dict['currentMetrics'] = _items
+        # puts key-value pairs in additional_properties in the top level
+        if self.additional_properties is not None:
+            for _key, _value in self.additional_properties.items():
+                _dict[_key] = _value
+
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> V2HorizontalPodAutoscalerStatus:
+    def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
         """Create an instance of V2HorizontalPodAutoscalerStatus from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return V2HorizontalPodAutoscalerStatus.parse_obj(obj)
+            return cls.model_validate(obj)
 
-        _obj = V2HorizontalPodAutoscalerStatus.parse_obj({
-            "conditions": [V2HorizontalPodAutoscalerCondition.from_dict(_item) for _item in obj.get("conditions")] if obj.get("conditions") is not None else None,
-            "current_metrics": [V2MetricStatus.from_dict(_item) for _item in obj.get("currentMetrics")] if obj.get("currentMetrics") is not None else None,
-            "current_replicas": obj.get("currentReplicas"),
-            "desired_replicas": obj.get("desiredReplicas"),
-            "last_scale_time": obj.get("lastScaleTime"),
-            "observed_generation": obj.get("observedGeneration")
+        _obj = cls.model_validate({
+            "conditions": [V2HorizontalPodAutoscalerCondition.from_dict(_item) for _item in obj["conditions"]] if obj.get("conditions") is not None else None,
+            "currentMetrics": [V2MetricStatus.from_dict(_item) for _item in obj["currentMetrics"]] if obj.get("currentMetrics") is not None else None,
+            "currentReplicas": obj.get("currentReplicas"),
+            "desiredReplicas": obj.get("desiredReplicas"),
+            "lastScaleTime": obj.get("lastScaleTime"),
+            "observedGeneration": obj.get("observedGeneration")
         })
+        # store additional fields in additional_properties
+        for _key in obj.keys():
+            if _key not in cls.__properties:
+                _obj.additional_properties[_key] = obj.get(_key)
+
         return _obj
 
 

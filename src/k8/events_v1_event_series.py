@@ -18,56 +18,86 @@ import re  # noqa: F401
 import json
 
 from datetime import datetime
-
-from pydantic import BaseModel, Field, StrictInt
+from pydantic import BaseModel, ConfigDict, Field, StrictInt
+from typing import Any, ClassVar, Dict, List
+from typing import Optional, Set
+from typing_extensions import Self
 
 class EventsV1EventSeries(BaseModel):
     """
-    EventSeries contain information on series of events, i.e. thing that was/is happening continuously for some time. How often to update the EventSeries is up to the event reporters. The default event reporter in \"k8s.io/client-go/tools/events/event_broadcaster.go\" shows how this struct is updated on heartbeats and can guide customized reporter implementations.  # noqa: E501
-    """
-    count: StrictInt = Field(..., description="count is the number of occurrences in this series up to the last heartbeat time.")
-    last_observed_time: datetime = Field(..., alias="lastObservedTime", description="lastObservedTime is the time when last Event from the series was seen before last heartbeat.")
-    __properties = ["count", "lastObservedTime"]
+    EventSeries contain information on series of events, i.e. thing that was/is happening continuously for some time. How often to update the EventSeries is up to the event reporters. The default event reporter in \"k8s.io/client-go/tools/events/event_broadcaster.go\" shows how this struct is updated on heartbeats and can guide customized reporter implementations.
+    """ # noqa: E501
+    count: StrictInt = Field(description="count is the number of occurrences in this series up to the last heartbeat time.")
+    last_observed_time: datetime = Field(description="lastObservedTime is the time when last Event from the series was seen before last heartbeat.", alias="lastObservedTime")
+    additional_properties: Dict[str, Any] = {}
+    __properties: ClassVar[List[str]] = ["count", "lastObservedTime"]
 
-    class Config:
-        """Pydantic configuration"""
-        allow_population_by_field_name = True
-        validate_assignment = True
+    model_config = ConfigDict(
+        populate_by_name=True,
+        validate_assignment=True,
+        protected_namespaces=(),
+    )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
-        return pprint.pformat(self.dict(by_alias=True))
+        return pprint.pformat(self.model_dump(by_alias=True))
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> EventsV1EventSeries:
+    def from_json(cls, json_str: str) -> Optional[Self]:
         """Create an instance of EventsV1EventSeries from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.dict(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        * Fields in `self.additional_properties` are added to the output dict.
+        """
+        excluded_fields: Set[str] = set([
+            "additional_properties",
+        ])
+
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude=excluded_fields,
+            exclude_none=True,
+        )
+        # puts key-value pairs in additional_properties in the top level
+        if self.additional_properties is not None:
+            for _key, _value in self.additional_properties.items():
+                _dict[_key] = _value
+
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> EventsV1EventSeries:
+    def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
         """Create an instance of EventsV1EventSeries from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return EventsV1EventSeries.parse_obj(obj)
+            return cls.model_validate(obj)
 
-        _obj = EventsV1EventSeries.parse_obj({
+        _obj = cls.model_validate({
             "count": obj.get("count"),
-            "last_observed_time": obj.get("lastObservedTime")
+            "lastObservedTime": obj.get("lastObservedTime")
         })
+        # store additional fields in additional_properties
+        for _key in obj.keys():
+            if _key not in cls.__properties:
+                _obj.additional_properties[_key] = obj.get(_key)
+
         return _obj
 
 

@@ -17,71 +17,101 @@ import pprint
 import re  # noqa: F401
 import json
 
-
-from typing import Dict, Optional, Union
-from pydantic import BaseModel, Field, StrictBool, StrictStr, conbytes, constr, validator
+from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictStr, field_validator
+from typing import Any, ClassVar, Dict, List, Optional, Union
+from typing_extensions import Annotated
 from .v1_object_meta import V1ObjectMeta
+from typing import Optional, Set
+from typing_extensions import Self
 
 class V1Secret(BaseModel):
     """
-    Secret holds secret data of a certain type. The total bytes of the values in the Data field must be less than MaxSecretSize bytes.  # noqa: E501
-    """
-    api_version: Optional[StrictStr] = Field(default=None, alias="apiVersion", description="APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources")
-    data: Optional[Dict[str, Union[conbytes(strict=True), constr(strict=True)]]] = Field(default=None, description="Data contains the secret data. Each key must consist of alphanumeric characters, '-', '_' or '.'. The serialized form of the secret data is a base64 encoded string, representing the arbitrary (possibly non-string) data value here. Described in https://tools.ietf.org/html/rfc4648#section-4")
+    Secret holds secret data of a certain type. The total bytes of the values in the Data field must be less than MaxSecretSize bytes.
+    """ # noqa: E501
+    api_version: Optional[StrictStr] = Field(default=None, description="APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources", alias="apiVersion")
+    data: Optional[Dict[str, Union[Annotated[bytes, Field(strict=True)], Annotated[str, Field(strict=True)]]]] = Field(default=None, description="Data contains the secret data. Each key must consist of alphanumeric characters, '-', '_' or '.'. The serialized form of the secret data is a base64 encoded string, representing the arbitrary (possibly non-string) data value here. Described in https://tools.ietf.org/html/rfc4648#section-4")
     immutable: Optional[StrictBool] = Field(default=None, description="Immutable, if set to true, ensures that data stored in the Secret cannot be updated (only object metadata can be modified). If not set to true, the field can be modified at any time. Defaulted to nil.")
     kind: Optional[StrictStr] = Field(default=None, description="Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds")
     metadata: Optional[V1ObjectMeta] = None
-    string_data: Optional[Dict[str, StrictStr]] = Field(default=None, alias="stringData", description="stringData allows specifying non-binary secret data in string form. It is provided as a write-only input field for convenience. All keys and values are merged into the data field on write, overwriting any existing values. The stringData field is never output when reading from the API.")
+    string_data: Optional[Dict[str, StrictStr]] = Field(default=None, description="stringData allows specifying non-binary secret data in string form. It is provided as a write-only input field for convenience. All keys and values are merged into the data field on write, overwriting any existing values. The stringData field is never output when reading from the API.", alias="stringData")
     type: Optional[StrictStr] = Field(default=None, description="Used to facilitate programmatic handling of secret data. More info: https://kubernetes.io/docs/concepts/configuration/secret/#secret-types")
-    __properties = ["apiVersion", "data", "immutable", "kind", "metadata", "stringData", "type"]
+    additional_properties: Dict[str, Any] = {}
+    __properties: ClassVar[List[str]] = ["apiVersion", "data", "immutable", "kind", "metadata", "stringData", "type"]
 
-    class Config:
-        """Pydantic configuration"""
-        allow_population_by_field_name = True
-        validate_assignment = True
+    model_config = ConfigDict(
+        populate_by_name=True,
+        validate_assignment=True,
+        protected_namespaces=(),
+    )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
-        return pprint.pformat(self.dict(by_alias=True))
+        return pprint.pformat(self.model_dump(by_alias=True))
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> V1Secret:
+    def from_json(cls, json_str: str) -> Optional[Self]:
         """Create an instance of V1Secret from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.dict(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        * Fields in `self.additional_properties` are added to the output dict.
+        """
+        excluded_fields: Set[str] = set([
+            "additional_properties",
+        ])
+
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude=excluded_fields,
+            exclude_none=True,
+        )
         # override the default output from pydantic by calling `to_dict()` of metadata
         if self.metadata:
             _dict['metadata'] = self.metadata.to_dict()
+        # puts key-value pairs in additional_properties in the top level
+        if self.additional_properties is not None:
+            for _key, _value in self.additional_properties.items():
+                _dict[_key] = _value
+
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> V1Secret:
+    def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
         """Create an instance of V1Secret from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return V1Secret.parse_obj(obj)
+            return cls.model_validate(obj)
 
-        _obj = V1Secret.parse_obj({
-            "api_version": obj.get("apiVersion"),
+        _obj = cls.model_validate({
+            "apiVersion": obj.get("apiVersion"),
             "data": obj.get("data"),
             "immutable": obj.get("immutable"),
             "kind": obj.get("kind"),
-            "metadata": V1ObjectMeta.from_dict(obj.get("metadata")) if obj.get("metadata") is not None else None,
-            "string_data": obj.get("stringData"),
+            "metadata": V1ObjectMeta.from_dict(obj["metadata"]) if obj.get("metadata") is not None else None,
+            "stringData": obj.get("stringData"),
             "type": obj.get("type")
         })
+        # store additional fields in additional_properties
+        for _key in obj.keys():
+            if _key not in cls.__properties:
+                _obj.additional_properties[_key] = obj.get(_key)
+
         return _obj
 
 

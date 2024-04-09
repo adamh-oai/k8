@@ -17,47 +17,66 @@ import pprint
 import re  # noqa: F401
 import json
 
-
-from typing import List, Optional
-from pydantic import BaseModel, Field, StrictInt, StrictStr, conlist
+from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr
+from typing import Any, ClassVar, Dict, List, Optional
 from .v1_status_cause import V1StatusCause
+from typing import Optional, Set
+from typing_extensions import Self
 
 class V1StatusDetails(BaseModel):
     """
-    StatusDetails is a set of additional properties that MAY be set by the server to provide additional information about a response. The Reason field of a Status object defines what attributes will be set. Clients must ignore fields that do not match the defined type of each attribute, and should assume that any attribute may be empty, invalid, or under defined.  # noqa: E501
-    """
-    causes: Optional[list[V1StatusCause]] = Field(default=None, description="The Causes array includes more details associated with the StatusReason failure. Not all StatusReasons may provide detailed causes.")
+    StatusDetails is a set of additional properties that MAY be set by the server to provide additional information about a response. The Reason field of a Status object defines what attributes will be set. Clients must ignore fields that do not match the defined type of each attribute, and should assume that any attribute may be empty, invalid, or under defined.
+    """ # noqa: E501
+    causes: Optional[List[V1StatusCause]] = Field(default=None, description="The Causes array includes more details associated with the StatusReason failure. Not all StatusReasons may provide detailed causes.")
     group: Optional[StrictStr] = Field(default=None, description="The group attribute of the resource associated with the status StatusReason.")
     kind: Optional[StrictStr] = Field(default=None, description="The kind attribute of the resource associated with the status StatusReason. On some operations may differ from the requested resource Kind. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds")
     name: Optional[StrictStr] = Field(default=None, description="The name attribute of the resource associated with the status StatusReason (when there is a single name which can be described).")
-    retry_after_seconds: Optional[StrictInt] = Field(default=None, alias="retryAfterSeconds", description="If specified, the time in seconds before the operation should be retried. Some errors may indicate the client must take an alternate action - for those errors this field may indicate how long to wait before taking the alternate action.")
+    retry_after_seconds: Optional[StrictInt] = Field(default=None, description="If specified, the time in seconds before the operation should be retried. Some errors may indicate the client must take an alternate action - for those errors this field may indicate how long to wait before taking the alternate action.", alias="retryAfterSeconds")
     uid: Optional[StrictStr] = Field(default=None, description="UID of the resource. (when there is a single resource which can be described). More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#uids")
-    __properties = ["causes", "group", "kind", "name", "retryAfterSeconds", "uid"]
+    additional_properties: Dict[str, Any] = {}
+    __properties: ClassVar[List[str]] = ["causes", "group", "kind", "name", "retryAfterSeconds", "uid"]
 
-    class Config:
-        """Pydantic configuration"""
-        allow_population_by_field_name = True
-        validate_assignment = True
+    model_config = ConfigDict(
+        populate_by_name=True,
+        validate_assignment=True,
+        protected_namespaces=(),
+    )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
-        return pprint.pformat(self.dict(by_alias=True))
+        return pprint.pformat(self.model_dump(by_alias=True))
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> V1StatusDetails:
+    def from_json(cls, json_str: str) -> Optional[Self]:
         """Create an instance of V1StatusDetails from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.dict(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        * Fields in `self.additional_properties` are added to the output dict.
+        """
+        excluded_fields: Set[str] = set([
+            "additional_properties",
+        ])
+
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude=excluded_fields,
+            exclude_none=True,
+        )
         # override the default output from pydantic by calling `to_dict()` of each item in causes (list)
         _items = []
         if self.causes:
@@ -65,25 +84,35 @@ class V1StatusDetails(BaseModel):
                 if _item:
                     _items.append(_item.to_dict())
             _dict['causes'] = _items
+        # puts key-value pairs in additional_properties in the top level
+        if self.additional_properties is not None:
+            for _key, _value in self.additional_properties.items():
+                _dict[_key] = _value
+
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> V1StatusDetails:
+    def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
         """Create an instance of V1StatusDetails from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return V1StatusDetails.parse_obj(obj)
+            return cls.model_validate(obj)
 
-        _obj = V1StatusDetails.parse_obj({
-            "causes": [V1StatusCause.from_dict(_item) for _item in obj.get("causes")] if obj.get("causes") is not None else None,
+        _obj = cls.model_validate({
+            "causes": [V1StatusCause.from_dict(_item) for _item in obj["causes"]] if obj.get("causes") is not None else None,
             "group": obj.get("group"),
             "kind": obj.get("kind"),
             "name": obj.get("name"),
-            "retry_after_seconds": obj.get("retryAfterSeconds"),
+            "retryAfterSeconds": obj.get("retryAfterSeconds"),
             "uid": obj.get("uid")
         })
+        # store additional fields in additional_properties
+        for _key in obj.keys():
+            if _key not in cls.__properties:
+                _obj.additional_properties[_key] = obj.get(_key)
+
         return _obj
 
 

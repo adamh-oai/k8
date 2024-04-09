@@ -17,21 +17,24 @@ import pprint
 import re  # noqa: F401
 import json
 
-
-from typing import Optional, Union
-from pydantic import BaseModel, Field, StrictStr, conbytes, constr, validator
+from pydantic import BaseModel, ConfigDict, Field, StrictStr, field_validator
+from typing import Any, ClassVar, Dict, List, Optional, Union
+from typing_extensions import Annotated
 from .admissionregistration_v1_service_reference import AdmissionregistrationV1ServiceReference
+from typing import Optional, Set
+from typing_extensions import Self
 
 class AdmissionregistrationV1WebhookClientConfig(BaseModel):
     """
-    WebhookClientConfig contains the information to make a TLS connection with the webhook  # noqa: E501
-    """
-    ca_bundle: Optional[Union[conbytes(strict=True), constr(strict=True)]] = Field(default=None, alias="caBundle", description="`caBundle` is a PEM encoded CA bundle which will be used to validate the webhook's server certificate. If unspecified, system trust roots on the apiserver are used.")
+    WebhookClientConfig contains the information to make a TLS connection with the webhook
+    """ # noqa: E501
+    ca_bundle: Optional[Union[Annotated[bytes, Field(strict=True)], Annotated[str, Field(strict=True)]]] = Field(default=None, description="`caBundle` is a PEM encoded CA bundle which will be used to validate the webhook's server certificate. If unspecified, system trust roots on the apiserver are used.", alias="caBundle")
     service: Optional[AdmissionregistrationV1ServiceReference] = None
     url: Optional[StrictStr] = Field(default=None, description="`url` gives the location of the webhook, in standard URL form (`scheme://host:port/path`). Exactly one of `url` or `service` must be specified.  The `host` should not refer to a service running in the cluster; use the `service` field instead. The host might be resolved via external DNS in some apiservers (e.g., `kube-apiserver` cannot resolve in-cluster DNS as that would be a layering violation). `host` may also be an IP address.  Please note that using `localhost` or `127.0.0.1` as a `host` is risky unless you take great care to run this webhook on all hosts which run an apiserver which might need to make calls to this webhook. Such installs are likely to be non-portable, i.e., not easy to turn up in a new cluster.  The scheme must be \"https\"; the URL must begin with \"https://\".  A path is optional, and if present may be any string permissible in a URL. You may use the path to pass an arbitrary string to the webhook, for example, a cluster identifier.  Attempting to use a user or basic auth e.g. \"user:password@\" is not allowed. Fragments (\"#...\") and query parameters (\"?...\") are not allowed, either.")
-    __properties = ["caBundle", "service", "url"]
+    additional_properties: Dict[str, Any] = {}
+    __properties: ClassVar[List[str]] = ["caBundle", "service", "url"]
 
-    @validator('ca_bundle')
+    @field_validator('ca_bundle')
     def ca_bundle_validate_regular_expression(cls, value):
         """Validates the regular expression"""
         if value is None:
@@ -41,49 +44,76 @@ class AdmissionregistrationV1WebhookClientConfig(BaseModel):
             raise ValueError(r"must validate the regular expression /^(?:[A-Za-z0-9+\/]{4})*(?:[A-Za-z0-9+\/]{2}==|[A-Za-z0-9+\/]{3}=)?$/")
         return value
 
-    class Config:
-        """Pydantic configuration"""
-        allow_population_by_field_name = True
-        validate_assignment = True
+    model_config = ConfigDict(
+        populate_by_name=True,
+        validate_assignment=True,
+        protected_namespaces=(),
+    )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
-        return pprint.pformat(self.dict(by_alias=True))
+        return pprint.pformat(self.model_dump(by_alias=True))
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> AdmissionregistrationV1WebhookClientConfig:
+    def from_json(cls, json_str: str) -> Optional[Self]:
         """Create an instance of AdmissionregistrationV1WebhookClientConfig from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.dict(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        * Fields in `self.additional_properties` are added to the output dict.
+        """
+        excluded_fields: Set[str] = set([
+            "additional_properties",
+        ])
+
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude=excluded_fields,
+            exclude_none=True,
+        )
         # override the default output from pydantic by calling `to_dict()` of service
         if self.service:
             _dict['service'] = self.service.to_dict()
+        # puts key-value pairs in additional_properties in the top level
+        if self.additional_properties is not None:
+            for _key, _value in self.additional_properties.items():
+                _dict[_key] = _value
+
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> AdmissionregistrationV1WebhookClientConfig:
+    def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
         """Create an instance of AdmissionregistrationV1WebhookClientConfig from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return AdmissionregistrationV1WebhookClientConfig.parse_obj(obj)
+            return cls.model_validate(obj)
 
-        _obj = AdmissionregistrationV1WebhookClientConfig.parse_obj({
-            "ca_bundle": obj.get("caBundle"),
-            "service": AdmissionregistrationV1ServiceReference.from_dict(obj.get("service")) if obj.get("service") is not None else None,
+        _obj = cls.model_validate({
+            "caBundle": obj.get("caBundle"),
+            "service": AdmissionregistrationV1ServiceReference.from_dict(obj["service"]) if obj.get("service") is not None else None,
             "url": obj.get("url")
         })
+        # store additional fields in additional_properties
+        for _key in obj.keys():
+            if _key not in cls.__properties:
+                _obj.additional_properties[_key] = obj.get(_key)
+
         return _obj
 
 

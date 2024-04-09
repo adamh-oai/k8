@@ -17,47 +17,66 @@ import pprint
 import re  # noqa: F401
 import json
 
-
-from typing import List, Optional
-from pydantic import BaseModel, Field, StrictStr, conlist
+from pydantic import BaseModel, ConfigDict, Field, StrictStr
+from typing import Any, ClassVar, Dict, List, Optional
 from .v1_ingress_backend import V1IngressBackend
 from .v1_ingress_rule import V1IngressRule
 from .v1_ingress_tls import V1IngressTLS
+from typing import Optional, Set
+from typing_extensions import Self
 
 class V1IngressSpec(BaseModel):
     """
-    IngressSpec describes the Ingress the user wishes to exist.  # noqa: E501
-    """
+    IngressSpec describes the Ingress the user wishes to exist.
+    """ # noqa: E501
     default_backend: Optional[V1IngressBackend] = Field(default=None, alias="defaultBackend")
-    ingress_class_name: Optional[StrictStr] = Field(default=None, alias="ingressClassName", description="ingressClassName is the name of an IngressClass cluster resource. Ingress controller implementations use this field to know whether they should be serving this Ingress resource, by a transitive connection (controller -> IngressClass -> Ingress resource). Although the `kubernetes.io/ingress.class` annotation (simple constant name) was never formally defined, it was widely supported by Ingress controllers to create a direct binding between Ingress controller and Ingress resources. Newly created Ingress resources should prefer using the field. However, even though the annotation is officially deprecated, for backwards compatibility reasons, ingress controllers should still honor that annotation if present.")
-    rules: Optional[list[V1IngressRule]] = Field(default=None, description="rules is a list of host rules used to configure the Ingress. If unspecified, or no rule matches, all traffic is sent to the default backend.")
-    tls: Optional[list[V1IngressTLS]] = Field(default=None, description="tls represents the TLS configuration. Currently the Ingress only supports a single TLS port, 443. If multiple members of this list specify different hosts, they will be multiplexed on the same port according to the hostname specified through the SNI TLS extension, if the ingress controller fulfilling the ingress supports SNI.")
-    __properties = ["defaultBackend", "ingressClassName", "rules", "tls"]
+    ingress_class_name: Optional[StrictStr] = Field(default=None, description="ingressClassName is the name of an IngressClass cluster resource. Ingress controller implementations use this field to know whether they should be serving this Ingress resource, by a transitive connection (controller -> IngressClass -> Ingress resource). Although the `kubernetes.io/ingress.class` annotation (simple constant name) was never formally defined, it was widely supported by Ingress controllers to create a direct binding between Ingress controller and Ingress resources. Newly created Ingress resources should prefer using the field. However, even though the annotation is officially deprecated, for backwards compatibility reasons, ingress controllers should still honor that annotation if present.", alias="ingressClassName")
+    rules: Optional[List[V1IngressRule]] = Field(default=None, description="rules is a list of host rules used to configure the Ingress. If unspecified, or no rule matches, all traffic is sent to the default backend.")
+    tls: Optional[List[V1IngressTLS]] = Field(default=None, description="tls represents the TLS configuration. Currently the Ingress only supports a single TLS port, 443. If multiple members of this list specify different hosts, they will be multiplexed on the same port according to the hostname specified through the SNI TLS extension, if the ingress controller fulfilling the ingress supports SNI.")
+    additional_properties: Dict[str, Any] = {}
+    __properties: ClassVar[List[str]] = ["defaultBackend", "ingressClassName", "rules", "tls"]
 
-    class Config:
-        """Pydantic configuration"""
-        allow_population_by_field_name = True
-        validate_assignment = True
+    model_config = ConfigDict(
+        populate_by_name=True,
+        validate_assignment=True,
+        protected_namespaces=(),
+    )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
-        return pprint.pformat(self.dict(by_alias=True))
+        return pprint.pformat(self.model_dump(by_alias=True))
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> V1IngressSpec:
+    def from_json(cls, json_str: str) -> Optional[Self]:
         """Create an instance of V1IngressSpec from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.dict(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        * Fields in `self.additional_properties` are added to the output dict.
+        """
+        excluded_fields: Set[str] = set([
+            "additional_properties",
+        ])
+
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude=excluded_fields,
+            exclude_none=True,
+        )
         # override the default output from pydantic by calling `to_dict()` of default_backend
         if self.default_backend:
             _dict['defaultBackend'] = self.default_backend.to_dict()
@@ -75,23 +94,33 @@ class V1IngressSpec(BaseModel):
                 if _item:
                     _items.append(_item.to_dict())
             _dict['tls'] = _items
+        # puts key-value pairs in additional_properties in the top level
+        if self.additional_properties is not None:
+            for _key, _value in self.additional_properties.items():
+                _dict[_key] = _value
+
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> V1IngressSpec:
+    def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
         """Create an instance of V1IngressSpec from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return V1IngressSpec.parse_obj(obj)
+            return cls.model_validate(obj)
 
-        _obj = V1IngressSpec.parse_obj({
-            "default_backend": V1IngressBackend.from_dict(obj.get("defaultBackend")) if obj.get("defaultBackend") is not None else None,
-            "ingress_class_name": obj.get("ingressClassName"),
-            "rules": [V1IngressRule.from_dict(_item) for _item in obj.get("rules")] if obj.get("rules") is not None else None,
-            "tls": [V1IngressTLS.from_dict(_item) for _item in obj.get("tls")] if obj.get("tls") is not None else None
+        _obj = cls.model_validate({
+            "defaultBackend": V1IngressBackend.from_dict(obj["defaultBackend"]) if obj.get("defaultBackend") is not None else None,
+            "ingressClassName": obj.get("ingressClassName"),
+            "rules": [V1IngressRule.from_dict(_item) for _item in obj["rules"]] if obj.get("rules") is not None else None,
+            "tls": [V1IngressTLS.from_dict(_item) for _item in obj["tls"]] if obj.get("tls") is not None else None
         })
+        # store additional fields in additional_properties
+        for _key in obj.keys():
+            if _key not in cls.__properties:
+                _obj.additional_properties[_key] = obj.get(_key)
+
         return _obj
 
 

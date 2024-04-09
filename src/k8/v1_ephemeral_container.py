@@ -17,9 +17,8 @@ import pprint
 import re  # noqa: F401
 import json
 
-
-from typing import List, Optional
-from pydantic import BaseModel, Field, StrictBool, StrictStr, conlist
+from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictStr
+from typing import Any, ClassVar, Dict, List, Optional
 from .v1_container_port import V1ContainerPort
 from .v1_container_resize_policy import V1ContainerResizePolicy
 from .v1_env_from_source import V1EnvFromSource
@@ -30,62 +29,82 @@ from .v1_resource_requirements import V1ResourceRequirements
 from .v1_security_context import V1SecurityContext
 from .v1_volume_device import V1VolumeDevice
 from .v1_volume_mount import V1VolumeMount
+from typing import Optional, Set
+from typing_extensions import Self
 
 class V1EphemeralContainer(BaseModel):
     """
-    An EphemeralContainer is a temporary container that you may add to an existing Pod for user-initiated activities such as debugging. Ephemeral containers have no resource or scheduling guarantees, and they will not be restarted when they exit or when a Pod is removed or restarted. The kubelet may evict a Pod if an ephemeral container causes the Pod to exceed its resource allocation.  To add an ephemeral container, use the ephemeralcontainers subresource of an existing Pod. Ephemeral containers may not be removed or restarted.  # noqa: E501
-    """
-    args: Optional[list[StrictStr]] = Field(default=None, description="Arguments to the entrypoint. The image's CMD is used if this is not provided. Variable references $(VAR_NAME) are expanded using the container's environment. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Cannot be updated. More info: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#running-a-command-in-a-shell")
-    command: Optional[list[StrictStr]] = Field(default=None, description="Entrypoint array. Not executed within a shell. The image's ENTRYPOINT is used if this is not provided. Variable references $(VAR_NAME) are expanded using the container's environment. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Cannot be updated. More info: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#running-a-command-in-a-shell")
-    env: Optional[list[V1EnvVar]] = Field(default=None, description="List of environment variables to set in the container. Cannot be updated.")
-    env_from: Optional[list[V1EnvFromSource]] = Field(default=None, alias="envFrom", description="List of sources to populate environment variables in the container. The keys defined within a source must be a C_IDENTIFIER. All invalid keys will be reported as an event when the container is starting. When a key exists in multiple sources, the value associated with the last source will take precedence. Values defined by an Env with a duplicate key will take precedence. Cannot be updated.")
+    An EphemeralContainer is a temporary container that you may add to an existing Pod for user-initiated activities such as debugging. Ephemeral containers have no resource or scheduling guarantees, and they will not be restarted when they exit or when a Pod is removed or restarted. The kubelet may evict a Pod if an ephemeral container causes the Pod to exceed its resource allocation.  To add an ephemeral container, use the ephemeralcontainers subresource of an existing Pod. Ephemeral containers may not be removed or restarted.
+    """ # noqa: E501
+    args: Optional[List[StrictStr]] = Field(default=None, description="Arguments to the entrypoint. The image's CMD is used if this is not provided. Variable references $(VAR_NAME) are expanded using the container's environment. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Cannot be updated. More info: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#running-a-command-in-a-shell")
+    command: Optional[List[StrictStr]] = Field(default=None, description="Entrypoint array. Not executed within a shell. The image's ENTRYPOINT is used if this is not provided. Variable references $(VAR_NAME) are expanded using the container's environment. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Cannot be updated. More info: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#running-a-command-in-a-shell")
+    env: Optional[List[V1EnvVar]] = Field(default=None, description="List of environment variables to set in the container. Cannot be updated.")
+    env_from: Optional[List[V1EnvFromSource]] = Field(default=None, description="List of sources to populate environment variables in the container. The keys defined within a source must be a C_IDENTIFIER. All invalid keys will be reported as an event when the container is starting. When a key exists in multiple sources, the value associated with the last source will take precedence. Values defined by an Env with a duplicate key will take precedence. Cannot be updated.", alias="envFrom")
     image: Optional[StrictStr] = Field(default=None, description="Container image name. More info: https://kubernetes.io/docs/concepts/containers/images")
-    image_pull_policy: Optional[StrictStr] = Field(default=None, alias="imagePullPolicy", description="Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images")
+    image_pull_policy: Optional[StrictStr] = Field(default=None, description="Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images", alias="imagePullPolicy")
     lifecycle: Optional[V1Lifecycle] = None
     liveness_probe: Optional[V1Probe] = Field(default=None, alias="livenessProbe")
-    name: StrictStr = Field(..., description="Name of the ephemeral container specified as a DNS_LABEL. This name must be unique among all containers, init containers and ephemeral containers.")
-    ports: Optional[list[V1ContainerPort]] = Field(default=None, description="Ports are not allowed for ephemeral containers.")
+    name: StrictStr = Field(description="Name of the ephemeral container specified as a DNS_LABEL. This name must be unique among all containers, init containers and ephemeral containers.")
+    ports: Optional[List[V1ContainerPort]] = Field(default=None, description="Ports are not allowed for ephemeral containers.")
     readiness_probe: Optional[V1Probe] = Field(default=None, alias="readinessProbe")
-    resize_policy: Optional[list[V1ContainerResizePolicy]] = Field(default=None, alias="resizePolicy", description="Resources resize policy for the container.")
+    resize_policy: Optional[List[V1ContainerResizePolicy]] = Field(default=None, description="Resources resize policy for the container.", alias="resizePolicy")
     resources: Optional[V1ResourceRequirements] = None
-    restart_policy: Optional[StrictStr] = Field(default=None, alias="restartPolicy", description="Restart policy for the container to manage the restart behavior of each container within a pod. This may only be set for init containers. You cannot set this field on ephemeral containers.")
+    restart_policy: Optional[StrictStr] = Field(default=None, description="Restart policy for the container to manage the restart behavior of each container within a pod. This may only be set for init containers. You cannot set this field on ephemeral containers.", alias="restartPolicy")
     security_context: Optional[V1SecurityContext] = Field(default=None, alias="securityContext")
     startup_probe: Optional[V1Probe] = Field(default=None, alias="startupProbe")
     stdin: Optional[StrictBool] = Field(default=None, description="Whether this container should allocate a buffer for stdin in the container runtime. If this is not set, reads from stdin in the container will always result in EOF. Default is false.")
-    stdin_once: Optional[StrictBool] = Field(default=None, alias="stdinOnce", description="Whether the container runtime should close the stdin channel after it has been opened by a single attach. When stdin is true the stdin stream will remain open across multiple attach sessions. If stdinOnce is set to true, stdin is opened on container start, is empty until the first client attaches to stdin, and then remains open and accepts data until the client disconnects, at which time stdin is closed and remains closed until the container is restarted. If this flag is false, a container processes that reads from stdin will never receive an EOF. Default is false")
-    target_container_name: Optional[StrictStr] = Field(default=None, alias="targetContainerName", description="If set, the name of the container from PodSpec that this ephemeral container targets. The ephemeral container will be run in the namespaces (IPC, PID, etc) of this container. If not set then the ephemeral container uses the namespaces configured in the Pod spec.  The container runtime must implement support for this feature. If the runtime does not support namespace targeting then the result of setting this field is undefined.")
-    termination_message_path: Optional[StrictStr] = Field(default=None, alias="terminationMessagePath", description="Optional: Path at which the file to which the container's termination message will be written is mounted into the container's filesystem. Message written is intended to be brief final status, such as an assertion failure message. Will be truncated by the node if greater than 4096 bytes. The total message length across all containers will be limited to 12kb. Defaults to /dev/termination-log. Cannot be updated.")
-    termination_message_policy: Optional[StrictStr] = Field(default=None, alias="terminationMessagePolicy", description="Indicate how the termination message should be populated. File will use the contents of terminationMessagePath to populate the container status message on both success and failure. FallbackToLogsOnError will use the last chunk of container log output if the termination message file is empty and the container exited with an error. The log output is limited to 2048 bytes or 80 lines, whichever is smaller. Defaults to File. Cannot be updated.")
+    stdin_once: Optional[StrictBool] = Field(default=None, description="Whether the container runtime should close the stdin channel after it has been opened by a single attach. When stdin is true the stdin stream will remain open across multiple attach sessions. If stdinOnce is set to true, stdin is opened on container start, is empty until the first client attaches to stdin, and then remains open and accepts data until the client disconnects, at which time stdin is closed and remains closed until the container is restarted. If this flag is false, a container processes that reads from stdin will never receive an EOF. Default is false", alias="stdinOnce")
+    target_container_name: Optional[StrictStr] = Field(default=None, description="If set, the name of the container from PodSpec that this ephemeral container targets. The ephemeral container will be run in the namespaces (IPC, PID, etc) of this container. If not set then the ephemeral container uses the namespaces configured in the Pod spec.  The container runtime must implement support for this feature. If the runtime does not support namespace targeting then the result of setting this field is undefined.", alias="targetContainerName")
+    termination_message_path: Optional[StrictStr] = Field(default=None, description="Optional: Path at which the file to which the container's termination message will be written is mounted into the container's filesystem. Message written is intended to be brief final status, such as an assertion failure message. Will be truncated by the node if greater than 4096 bytes. The total message length across all containers will be limited to 12kb. Defaults to /dev/termination-log. Cannot be updated.", alias="terminationMessagePath")
+    termination_message_policy: Optional[StrictStr] = Field(default=None, description="Indicate how the termination message should be populated. File will use the contents of terminationMessagePath to populate the container status message on both success and failure. FallbackToLogsOnError will use the last chunk of container log output if the termination message file is empty and the container exited with an error. The log output is limited to 2048 bytes or 80 lines, whichever is smaller. Defaults to File. Cannot be updated.", alias="terminationMessagePolicy")
     tty: Optional[StrictBool] = Field(default=None, description="Whether this container should allocate a TTY for itself, also requires 'stdin' to be true. Default is false.")
-    volume_devices: Optional[list[V1VolumeDevice]] = Field(default=None, alias="volumeDevices", description="volumeDevices is the list of block devices to be used by the container.")
-    volume_mounts: Optional[list[V1VolumeMount]] = Field(default=None, alias="volumeMounts", description="Pod volumes to mount into the container's filesystem. Subpath mounts are not allowed for ephemeral containers. Cannot be updated.")
-    working_dir: Optional[StrictStr] = Field(default=None, alias="workingDir", description="Container's working directory. If not specified, the container runtime's default will be used, which might be configured in the container image. Cannot be updated.")
-    __properties = ["args", "command", "env", "envFrom", "image", "imagePullPolicy", "lifecycle", "livenessProbe", "name", "ports", "readinessProbe", "resizePolicy", "resources", "restartPolicy", "securityContext", "startupProbe", "stdin", "stdinOnce", "targetContainerName", "terminationMessagePath", "terminationMessagePolicy", "tty", "volumeDevices", "volumeMounts", "workingDir"]
+    volume_devices: Optional[List[V1VolumeDevice]] = Field(default=None, description="volumeDevices is the list of block devices to be used by the container.", alias="volumeDevices")
+    volume_mounts: Optional[List[V1VolumeMount]] = Field(default=None, description="Pod volumes to mount into the container's filesystem. Subpath mounts are not allowed for ephemeral containers. Cannot be updated.", alias="volumeMounts")
+    working_dir: Optional[StrictStr] = Field(default=None, description="Container's working directory. If not specified, the container runtime's default will be used, which might be configured in the container image. Cannot be updated.", alias="workingDir")
+    additional_properties: Dict[str, Any] = {}
+    __properties: ClassVar[List[str]] = ["args", "command", "env", "envFrom", "image", "imagePullPolicy", "lifecycle", "livenessProbe", "name", "ports", "readinessProbe", "resizePolicy", "resources", "restartPolicy", "securityContext", "startupProbe", "stdin", "stdinOnce", "targetContainerName", "terminationMessagePath", "terminationMessagePolicy", "tty", "volumeDevices", "volumeMounts", "workingDir"]
 
-    class Config:
-        """Pydantic configuration"""
-        allow_population_by_field_name = True
-        validate_assignment = True
+    model_config = ConfigDict(
+        populate_by_name=True,
+        validate_assignment=True,
+        protected_namespaces=(),
+    )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
-        return pprint.pformat(self.dict(by_alias=True))
+        return pprint.pformat(self.model_dump(by_alias=True))
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> V1EphemeralContainer:
+    def from_json(cls, json_str: str) -> Optional[Self]:
         """Create an instance of V1EphemeralContainer from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.dict(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        * Fields in `self.additional_properties` are added to the output dict.
+        """
+        excluded_fields: Set[str] = set([
+            "additional_properties",
+        ])
+
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude=excluded_fields,
+            exclude_none=True,
+        )
         # override the default output from pydantic by calling `to_dict()` of each item in env (list)
         _items = []
         if self.env:
@@ -146,44 +165,54 @@ class V1EphemeralContainer(BaseModel):
                 if _item:
                     _items.append(_item.to_dict())
             _dict['volumeMounts'] = _items
+        # puts key-value pairs in additional_properties in the top level
+        if self.additional_properties is not None:
+            for _key, _value in self.additional_properties.items():
+                _dict[_key] = _value
+
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> V1EphemeralContainer:
+    def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
         """Create an instance of V1EphemeralContainer from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return V1EphemeralContainer.parse_obj(obj)
+            return cls.model_validate(obj)
 
-        _obj = V1EphemeralContainer.parse_obj({
+        _obj = cls.model_validate({
             "args": obj.get("args"),
             "command": obj.get("command"),
-            "env": [V1EnvVar.from_dict(_item) for _item in obj.get("env")] if obj.get("env") is not None else None,
-            "env_from": [V1EnvFromSource.from_dict(_item) for _item in obj.get("envFrom")] if obj.get("envFrom") is not None else None,
+            "env": [V1EnvVar.from_dict(_item) for _item in obj["env"]] if obj.get("env") is not None else None,
+            "envFrom": [V1EnvFromSource.from_dict(_item) for _item in obj["envFrom"]] if obj.get("envFrom") is not None else None,
             "image": obj.get("image"),
-            "image_pull_policy": obj.get("imagePullPolicy"),
-            "lifecycle": V1Lifecycle.from_dict(obj.get("lifecycle")) if obj.get("lifecycle") is not None else None,
-            "liveness_probe": V1Probe.from_dict(obj.get("livenessProbe")) if obj.get("livenessProbe") is not None else None,
+            "imagePullPolicy": obj.get("imagePullPolicy"),
+            "lifecycle": V1Lifecycle.from_dict(obj["lifecycle"]) if obj.get("lifecycle") is not None else None,
+            "livenessProbe": V1Probe.from_dict(obj["livenessProbe"]) if obj.get("livenessProbe") is not None else None,
             "name": obj.get("name"),
-            "ports": [V1ContainerPort.from_dict(_item) for _item in obj.get("ports")] if obj.get("ports") is not None else None,
-            "readiness_probe": V1Probe.from_dict(obj.get("readinessProbe")) if obj.get("readinessProbe") is not None else None,
-            "resize_policy": [V1ContainerResizePolicy.from_dict(_item) for _item in obj.get("resizePolicy")] if obj.get("resizePolicy") is not None else None,
-            "resources": V1ResourceRequirements.from_dict(obj.get("resources")) if obj.get("resources") is not None else None,
-            "restart_policy": obj.get("restartPolicy"),
-            "security_context": V1SecurityContext.from_dict(obj.get("securityContext")) if obj.get("securityContext") is not None else None,
-            "startup_probe": V1Probe.from_dict(obj.get("startupProbe")) if obj.get("startupProbe") is not None else None,
+            "ports": [V1ContainerPort.from_dict(_item) for _item in obj["ports"]] if obj.get("ports") is not None else None,
+            "readinessProbe": V1Probe.from_dict(obj["readinessProbe"]) if obj.get("readinessProbe") is not None else None,
+            "resizePolicy": [V1ContainerResizePolicy.from_dict(_item) for _item in obj["resizePolicy"]] if obj.get("resizePolicy") is not None else None,
+            "resources": V1ResourceRequirements.from_dict(obj["resources"]) if obj.get("resources") is not None else None,
+            "restartPolicy": obj.get("restartPolicy"),
+            "securityContext": V1SecurityContext.from_dict(obj["securityContext"]) if obj.get("securityContext") is not None else None,
+            "startupProbe": V1Probe.from_dict(obj["startupProbe"]) if obj.get("startupProbe") is not None else None,
             "stdin": obj.get("stdin"),
-            "stdin_once": obj.get("stdinOnce"),
-            "target_container_name": obj.get("targetContainerName"),
-            "termination_message_path": obj.get("terminationMessagePath"),
-            "termination_message_policy": obj.get("terminationMessagePolicy"),
+            "stdinOnce": obj.get("stdinOnce"),
+            "targetContainerName": obj.get("targetContainerName"),
+            "terminationMessagePath": obj.get("terminationMessagePath"),
+            "terminationMessagePolicy": obj.get("terminationMessagePolicy"),
             "tty": obj.get("tty"),
-            "volume_devices": [V1VolumeDevice.from_dict(_item) for _item in obj.get("volumeDevices")] if obj.get("volumeDevices") is not None else None,
-            "volume_mounts": [V1VolumeMount.from_dict(_item) for _item in obj.get("volumeMounts")] if obj.get("volumeMounts") is not None else None,
-            "working_dir": obj.get("workingDir")
+            "volumeDevices": [V1VolumeDevice.from_dict(_item) for _item in obj["volumeDevices"]] if obj.get("volumeDevices") is not None else None,
+            "volumeMounts": [V1VolumeMount.from_dict(_item) for _item in obj["volumeMounts"]] if obj.get("volumeMounts") is not None else None,
+            "workingDir": obj.get("workingDir")
         })
+        # store additional fields in additional_properties
+        for _key in obj.keys():
+            if _key not in cls.__properties:
+                _obj.additional_properties[_key] = obj.get(_key)
+
         return _obj
 
 

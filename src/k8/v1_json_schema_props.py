@@ -17,27 +17,28 @@ import pprint
 import re  # noqa: F401
 import json
 
-
-from typing import Any, Dict, List, Optional, Union
-from pydantic import BaseModel, Field, StrictBool, StrictFloat, StrictInt, StrictStr, conlist
+from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictFloat, StrictInt, StrictStr
+from typing import Any, ClassVar, Dict, List, Optional, Union
 from .v1_external_documentation import V1ExternalDocumentation
 from .v1_validation_rule import V1ValidationRule
+from typing import Optional, Set
+from typing_extensions import Self
 
 class V1JSONSchemaProps(BaseModel):
     """
-    JSONSchemaProps is a JSON-Schema following Specification Draft 4 (http://json-schema.org/).  # noqa: E501
-    """
+    JSONSchemaProps is a JSON-Schema following Specification Draft 4 (http://json-schema.org/).
+    """ # noqa: E501
     ref: Optional[StrictStr] = Field(default=None, alias="$ref")
     var_schema: Optional[StrictStr] = Field(default=None, alias="$schema")
-    additional_items: Optional[Dict[str, Any]] = Field(default=None, alias="additionalItems", description="JSONSchemaPropsOrBool represents JSONSchemaProps or a boolean value. Defaults to true for the boolean property.")
-    additional_properties: Optional[Dict[str, Any]] = Field(default=None, alias="additionalProperties", description="JSONSchemaPropsOrBool represents JSONSchemaProps or a boolean value. Defaults to true for the boolean property.")
-    all_of: Optional[list[V1JSONSchemaProps]] = Field(default=None, alias="allOf")
-    any_of: Optional[list[V1JSONSchemaProps]] = Field(default=None, alias="anyOf")
+    additional_items: Optional[Dict[str, Any]] = Field(default=None, description="JSONSchemaPropsOrBool represents JSONSchemaProps or a boolean value. Defaults to true for the boolean property.", alias="additionalItems")
+    additional_properties: Optional[Dict[str, Any]] = Field(default=None, description="JSONSchemaPropsOrBool represents JSONSchemaProps or a boolean value. Defaults to true for the boolean property.", alias="additionalProperties")
+    all_of: Optional[List[V1JSONSchemaProps]] = Field(default=None, alias="allOf")
+    any_of: Optional[List[V1JSONSchemaProps]] = Field(default=None, alias="anyOf")
     default: Optional[Dict[str, Any]] = Field(default=None, description="default is a default value for undefined object fields. Defaulting is a beta feature under the CustomResourceDefaulting feature gate. Defaulting requires spec.preserveUnknownFields to be false.")
     definitions: Optional[Dict[str, V1JSONSchemaProps]] = None
     dependencies: Optional[Dict[str, Dict[str, Any]]] = None
     description: Optional[StrictStr] = None
-    enum: Optional[conlist(Dict[str, Any])] = None
+    enum: Optional[List[Dict[str, Any]]] = None
     example: Optional[Dict[str, Any]] = Field(default=None, description="JSON represents any valid JSON value. These types are supported: bool, int64, float64, string, []interface{}, map[string]interface{} and nil.")
     exclusive_maximum: Optional[StrictBool] = Field(default=None, alias="exclusiveMaximum")
     exclusive_minimum: Optional[StrictBool] = Field(default=None, alias="exclusiveMinimum")
@@ -56,47 +57,65 @@ class V1JSONSchemaProps(BaseModel):
     multiple_of: Optional[Union[StrictFloat, StrictInt]] = Field(default=None, alias="multipleOf")
     var_not: Optional[V1JSONSchemaProps] = Field(default=None, alias="not")
     nullable: Optional[StrictBool] = None
-    one_of: Optional[list[V1JSONSchemaProps]] = Field(default=None, alias="oneOf")
+    one_of: Optional[List[V1JSONSchemaProps]] = Field(default=None, alias="oneOf")
     pattern: Optional[StrictStr] = None
     pattern_properties: Optional[Dict[str, V1JSONSchemaProps]] = Field(default=None, alias="patternProperties")
     properties: Optional[Dict[str, V1JSONSchemaProps]] = None
-    required: Optional[list[StrictStr]] = None
+    required: Optional[List[StrictStr]] = None
     title: Optional[StrictStr] = None
     type: Optional[StrictStr] = None
     unique_items: Optional[StrictBool] = Field(default=None, alias="uniqueItems")
-    x_kubernetes_embedded_resource: Optional[StrictBool] = Field(default=None, alias="x-kubernetes-embedded-resource", description="x-kubernetes-embedded-resource defines that the value is an embedded Kubernetes runtime.Object, with TypeMeta and ObjectMeta. The type must be object. It is allowed to further restrict the embedded object. kind, apiVersion and metadata are validated automatically. x-kubernetes-preserve-unknown-fields is allowed to be true, but does not have to be if the object is fully specified (up to kind, apiVersion, metadata).")
-    x_kubernetes_int_or_string: Optional[StrictBool] = Field(default=None, alias="x-kubernetes-int-or-string", description="x-kubernetes-int-or-string specifies that this value is either an integer or a string. If this is true, an empty type is allowed and type as child of anyOf is permitted if following one of the following patterns:  1) anyOf:    - type: integer    - type: string 2) allOf:    - anyOf:      - type: integer      - type: string    - ... zero or more")
-    x_kubernetes_list_map_keys: Optional[list[StrictStr]] = Field(default=None, alias="x-kubernetes-list-map-keys", description="x-kubernetes-list-map-keys annotates an array with the x-kubernetes-list-type `map` by specifying the keys used as the index of the map.  This tag MUST only be used on lists that have the \"x-kubernetes-list-type\" extension set to \"map\". Also, the values specified for this attribute must be a scalar typed field of the child structure (no nesting is supported).  The properties specified must either be required or have a default value, to ensure those properties are present for all list items.")
-    x_kubernetes_list_type: Optional[StrictStr] = Field(default=None, alias="x-kubernetes-list-type", description="x-kubernetes-list-type annotates an array to further describe its topology. This extension must only be used on lists and may have 3 possible values:  1) `atomic`: the list is treated as a single entity, like a scalar.      Atomic lists will be entirely replaced when updated. This extension      may be used on any type of list (struct, scalar, ...). 2) `set`:      Sets are lists that must not have multiple items with the same value. Each      value must be a scalar, an object with x-kubernetes-map-type `atomic` or an      array with x-kubernetes-list-type `atomic`. 3) `map`:      These lists are like maps in that their elements have a non-index key      used to identify them. Order is preserved upon merge. The map tag      must only be used on a list with elements of type object. Defaults to atomic for arrays.")
-    x_kubernetes_map_type: Optional[StrictStr] = Field(default=None, alias="x-kubernetes-map-type", description="x-kubernetes-map-type annotates an object to further describe its topology. This extension must only be used when type is object and may have 2 possible values:  1) `granular`:      These maps are actual maps (key-value pairs) and each fields are independent      from each other (they can each be manipulated by separate actors). This is      the default behaviour for all maps. 2) `atomic`: the list is treated as a single entity, like a scalar.      Atomic maps will be entirely replaced when updated.")
-    x_kubernetes_preserve_unknown_fields: Optional[StrictBool] = Field(default=None, alias="x-kubernetes-preserve-unknown-fields", description="x-kubernetes-preserve-unknown-fields stops the API server decoding step from pruning fields which are not specified in the validation schema. This affects fields recursively, but switches back to normal pruning behaviour if nested properties or additionalProperties are specified in the schema. This can either be true or undefined. False is forbidden.")
-    x_kubernetes_validations: Optional[list[V1ValidationRule]] = Field(default=None, alias="x-kubernetes-validations", description="x-kubernetes-validations describes a list of validation rules written in the CEL expression language. This field is an alpha-level. Using this field requires the feature gate `CustomResourceValidationExpressions` to be enabled.")
-    __properties = ["$ref", "$schema", "additionalItems", "additionalProperties", "allOf", "anyOf", "default", "definitions", "dependencies", "description", "enum", "example", "exclusiveMaximum", "exclusiveMinimum", "externalDocs", "format", "id", "items", "maxItems", "maxLength", "maxProperties", "maximum", "minItems", "minLength", "minProperties", "minimum", "multipleOf", "not", "nullable", "oneOf", "pattern", "patternProperties", "properties", "required", "title", "type", "uniqueItems", "x-kubernetes-embedded-resource", "x-kubernetes-int-or-string", "x-kubernetes-list-map-keys", "x-kubernetes-list-type", "x-kubernetes-map-type", "x-kubernetes-preserve-unknown-fields", "x-kubernetes-validations"]
+    x_kubernetes_embedded_resource: Optional[StrictBool] = Field(default=None, description="x-kubernetes-embedded-resource defines that the value is an embedded Kubernetes runtime.Object, with TypeMeta and ObjectMeta. The type must be object. It is allowed to further restrict the embedded object. kind, apiVersion and metadata are validated automatically. x-kubernetes-preserve-unknown-fields is allowed to be true, but does not have to be if the object is fully specified (up to kind, apiVersion, metadata).", alias="x-kubernetes-embedded-resource")
+    x_kubernetes_int_or_string: Optional[StrictBool] = Field(default=None, description="x-kubernetes-int-or-string specifies that this value is either an integer or a string. If this is true, an empty type is allowed and type as child of anyOf is permitted if following one of the following patterns:  1) anyOf:    - type: integer    - type: string 2) allOf:    - anyOf:      - type: integer      - type: string    - ... zero or more", alias="x-kubernetes-int-or-string")
+    x_kubernetes_list_map_keys: Optional[List[StrictStr]] = Field(default=None, description="x-kubernetes-list-map-keys annotates an array with the x-kubernetes-list-type `map` by specifying the keys used as the index of the map.  This tag MUST only be used on lists that have the \"x-kubernetes-list-type\" extension set to \"map\". Also, the values specified for this attribute must be a scalar typed field of the child structure (no nesting is supported).  The properties specified must either be required or have a default value, to ensure those properties are present for all list items.", alias="x-kubernetes-list-map-keys")
+    x_kubernetes_list_type: Optional[StrictStr] = Field(default=None, description="x-kubernetes-list-type annotates an array to further describe its topology. This extension must only be used on lists and may have 3 possible values:  1) `atomic`: the list is treated as a single entity, like a scalar.      Atomic lists will be entirely replaced when updated. This extension      may be used on any type of list (struct, scalar, ...). 2) `set`:      Sets are lists that must not have multiple items with the same value. Each      value must be a scalar, an object with x-kubernetes-map-type `atomic` or an      array with x-kubernetes-list-type `atomic`. 3) `map`:      These lists are like maps in that their elements have a non-index key      used to identify them. Order is preserved upon merge. The map tag      must only be used on a list with elements of type object. Defaults to atomic for arrays.", alias="x-kubernetes-list-type")
+    x_kubernetes_map_type: Optional[StrictStr] = Field(default=None, description="x-kubernetes-map-type annotates an object to further describe its topology. This extension must only be used when type is object and may have 2 possible values:  1) `granular`:      These maps are actual maps (key-value pairs) and each fields are independent      from each other (they can each be manipulated by separate actors). This is      the default behaviour for all maps. 2) `atomic`: the list is treated as a single entity, like a scalar.      Atomic maps will be entirely replaced when updated.", alias="x-kubernetes-map-type")
+    x_kubernetes_preserve_unknown_fields: Optional[StrictBool] = Field(default=None, description="x-kubernetes-preserve-unknown-fields stops the API server decoding step from pruning fields which are not specified in the validation schema. This affects fields recursively, but switches back to normal pruning behaviour if nested properties or additionalProperties are specified in the schema. This can either be true or undefined. False is forbidden.", alias="x-kubernetes-preserve-unknown-fields")
+    x_kubernetes_validations: Optional[List[V1ValidationRule]] = Field(default=None, description="x-kubernetes-validations describes a list of validation rules written in the CEL expression language. This field is an alpha-level. Using this field requires the feature gate `CustomResourceValidationExpressions` to be enabled.", alias="x-kubernetes-validations")
+    additional_properties: Dict[str, Any] = {}
+    __properties: ClassVar[List[str]] = ["$ref", "$schema", "additionalItems", "additionalProperties", "allOf", "anyOf", "default", "definitions", "dependencies", "description", "enum", "example", "exclusiveMaximum", "exclusiveMinimum", "externalDocs", "format", "id", "items", "maxItems", "maxLength", "maxProperties", "maximum", "minItems", "minLength", "minProperties", "minimum", "multipleOf", "not", "nullable", "oneOf", "pattern", "patternProperties", "properties", "required", "title", "type", "uniqueItems", "x-kubernetes-embedded-resource", "x-kubernetes-int-or-string", "x-kubernetes-list-map-keys", "x-kubernetes-list-type", "x-kubernetes-map-type", "x-kubernetes-preserve-unknown-fields", "x-kubernetes-validations"]
 
-    class Config:
-        """Pydantic configuration"""
-        allow_population_by_field_name = True
-        validate_assignment = True
+    model_config = ConfigDict(
+        populate_by_name=True,
+        validate_assignment=True,
+        protected_namespaces=(),
+    )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
-        return pprint.pformat(self.dict(by_alias=True))
+        return pprint.pformat(self.model_dump(by_alias=True))
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> V1JSONSchemaProps:
+    def from_json(cls, json_str: str) -> Optional[Self]:
         """Create an instance of V1JSONSchemaProps from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.dict(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        * Fields in `self.additional_properties` are added to the output dict.
+        """
+        excluded_fields: Set[str] = set([
+            "additional_properties",
+        ])
+
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude=excluded_fields,
+            exclude_none=True,
+        )
         # override the default output from pydantic by calling `to_dict()` of each item in all_of (list)
         _items = []
         if self.all_of:
@@ -152,28 +171,33 @@ class V1JSONSchemaProps(BaseModel):
                 if _item:
                     _items.append(_item.to_dict())
             _dict['x-kubernetes-validations'] = _items
+        # puts key-value pairs in additional_properties in the top level
+        if self.additional_properties is not None:
+            for _key, _value in self.additional_properties.items():
+                _dict[_key] = _value
+
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> V1JSONSchemaProps:
+    def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
         """Create an instance of V1JSONSchemaProps from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return V1JSONSchemaProps.parse_obj(obj)
+            return cls.model_validate(obj)
 
-        _obj = V1JSONSchemaProps.parse_obj({
-            "ref": obj.get("$ref"),
-            "var_schema": obj.get("$schema"),
-            "additional_items": obj.get("additionalItems"),
-            "additional_properties": obj.get("additionalProperties"),
-            "all_of": [V1JSONSchemaProps.from_dict(_item) for _item in obj.get("allOf")] if obj.get("allOf") is not None else None,
-            "any_of": [V1JSONSchemaProps.from_dict(_item) for _item in obj.get("anyOf")] if obj.get("anyOf") is not None else None,
+        _obj = cls.model_validate({
+            "$ref": obj.get("$ref"),
+            "$schema": obj.get("$schema"),
+            "additionalItems": obj.get("additionalItems"),
+            "additionalProperties": obj.get("additionalProperties"),
+            "allOf": [V1JSONSchemaProps.from_dict(_item) for _item in obj["allOf"]] if obj.get("allOf") is not None else None,
+            "anyOf": [V1JSONSchemaProps.from_dict(_item) for _item in obj["anyOf"]] if obj.get("anyOf") is not None else None,
             "default": obj.get("default"),
             "definitions": dict(
                 (_k, V1JSONSchemaProps.from_dict(_v))
-                for _k, _v in obj.get("definitions").items()
+                for _k, _v in obj["definitions"].items()
             )
             if obj.get("definitions") is not None
             else None,
@@ -181,50 +205,56 @@ class V1JSONSchemaProps(BaseModel):
             "description": obj.get("description"),
             "enum": obj.get("enum"),
             "example": obj.get("example"),
-            "exclusive_maximum": obj.get("exclusiveMaximum"),
-            "exclusive_minimum": obj.get("exclusiveMinimum"),
-            "external_docs": V1ExternalDocumentation.from_dict(obj.get("externalDocs")) if obj.get("externalDocs") is not None else None,
+            "exclusiveMaximum": obj.get("exclusiveMaximum"),
+            "exclusiveMinimum": obj.get("exclusiveMinimum"),
+            "externalDocs": V1ExternalDocumentation.from_dict(obj["externalDocs"]) if obj.get("externalDocs") is not None else None,
             "format": obj.get("format"),
             "id": obj.get("id"),
             "items": obj.get("items"),
-            "max_items": obj.get("maxItems"),
-            "max_length": obj.get("maxLength"),
-            "max_properties": obj.get("maxProperties"),
+            "maxItems": obj.get("maxItems"),
+            "maxLength": obj.get("maxLength"),
+            "maxProperties": obj.get("maxProperties"),
             "maximum": obj.get("maximum"),
-            "min_items": obj.get("minItems"),
-            "min_length": obj.get("minLength"),
-            "min_properties": obj.get("minProperties"),
+            "minItems": obj.get("minItems"),
+            "minLength": obj.get("minLength"),
+            "minProperties": obj.get("minProperties"),
             "minimum": obj.get("minimum"),
-            "multiple_of": obj.get("multipleOf"),
-            "var_not": V1JSONSchemaProps.from_dict(obj.get("not")) if obj.get("not") is not None else None,
+            "multipleOf": obj.get("multipleOf"),
+            "not": V1JSONSchemaProps.from_dict(obj["not"]) if obj.get("not") is not None else None,
             "nullable": obj.get("nullable"),
-            "one_of": [V1JSONSchemaProps.from_dict(_item) for _item in obj.get("oneOf")] if obj.get("oneOf") is not None else None,
+            "oneOf": [V1JSONSchemaProps.from_dict(_item) for _item in obj["oneOf"]] if obj.get("oneOf") is not None else None,
             "pattern": obj.get("pattern"),
-            "pattern_properties": dict(
+            "patternProperties": dict(
                 (_k, V1JSONSchemaProps.from_dict(_v))
-                for _k, _v in obj.get("patternProperties").items()
+                for _k, _v in obj["patternProperties"].items()
             )
             if obj.get("patternProperties") is not None
             else None,
             "properties": dict(
                 (_k, V1JSONSchemaProps.from_dict(_v))
-                for _k, _v in obj.get("properties").items()
+                for _k, _v in obj["properties"].items()
             )
             if obj.get("properties") is not None
             else None,
             "required": obj.get("required"),
             "title": obj.get("title"),
             "type": obj.get("type"),
-            "unique_items": obj.get("uniqueItems"),
-            "x_kubernetes_embedded_resource": obj.get("x-kubernetes-embedded-resource"),
-            "x_kubernetes_int_or_string": obj.get("x-kubernetes-int-or-string"),
-            "x_kubernetes_list_map_keys": obj.get("x-kubernetes-list-map-keys"),
-            "x_kubernetes_list_type": obj.get("x-kubernetes-list-type"),
-            "x_kubernetes_map_type": obj.get("x-kubernetes-map-type"),
-            "x_kubernetes_preserve_unknown_fields": obj.get("x-kubernetes-preserve-unknown-fields"),
-            "x_kubernetes_validations": [V1ValidationRule.from_dict(_item) for _item in obj.get("x-kubernetes-validations")] if obj.get("x-kubernetes-validations") is not None else None
+            "uniqueItems": obj.get("uniqueItems"),
+            "x-kubernetes-embedded-resource": obj.get("x-kubernetes-embedded-resource"),
+            "x-kubernetes-int-or-string": obj.get("x-kubernetes-int-or-string"),
+            "x-kubernetes-list-map-keys": obj.get("x-kubernetes-list-map-keys"),
+            "x-kubernetes-list-type": obj.get("x-kubernetes-list-type"),
+            "x-kubernetes-map-type": obj.get("x-kubernetes-map-type"),
+            "x-kubernetes-preserve-unknown-fields": obj.get("x-kubernetes-preserve-unknown-fields"),
+            "x-kubernetes-validations": [V1ValidationRule.from_dict(_item) for _item in obj["x-kubernetes-validations"]] if obj.get("x-kubernetes-validations") is not None else None
         })
+        # store additional fields in additional_properties
+        for _key in obj.keys():
+            if _key not in cls.__properties:
+                _obj.additional_properties[_key] = obj.get(_key)
+
         return _obj
 
-V1JSONSchemaProps.update_forward_refs()
+# TODO: Rewrite to not use raise_errors
+V1JSONSchemaProps.model_rebuild(raise_errors=False)
 

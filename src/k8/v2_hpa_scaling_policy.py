@@ -17,59 +17,88 @@ import pprint
 import re  # noqa: F401
 import json
 
-
-
-from pydantic import BaseModel, Field, StrictInt, StrictStr
+from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr
+from typing import Any, ClassVar, Dict, List
+from typing import Optional, Set
+from typing_extensions import Self
 
 class V2HPAScalingPolicy(BaseModel):
     """
-    HPAScalingPolicy is a single policy which must hold true for a specified past interval.  # noqa: E501
-    """
-    period_seconds: StrictInt = Field(..., alias="periodSeconds", description="periodSeconds specifies the window of time for which the policy should hold true. PeriodSeconds must be greater than zero and less than or equal to 1800 (30 min).")
-    type: StrictStr = Field(..., description="type is used to specify the scaling policy.")
-    value: StrictInt = Field(..., description="value contains the amount of change which is permitted by the policy. It must be greater than zero")
-    __properties = ["periodSeconds", "type", "value"]
+    HPAScalingPolicy is a single policy which must hold true for a specified past interval.
+    """ # noqa: E501
+    period_seconds: StrictInt = Field(description="periodSeconds specifies the window of time for which the policy should hold true. PeriodSeconds must be greater than zero and less than or equal to 1800 (30 min).", alias="periodSeconds")
+    type: StrictStr = Field(description="type is used to specify the scaling policy.")
+    value: StrictInt = Field(description="value contains the amount of change which is permitted by the policy. It must be greater than zero")
+    additional_properties: Dict[str, Any] = {}
+    __properties: ClassVar[List[str]] = ["periodSeconds", "type", "value"]
 
-    class Config:
-        """Pydantic configuration"""
-        allow_population_by_field_name = True
-        validate_assignment = True
+    model_config = ConfigDict(
+        populate_by_name=True,
+        validate_assignment=True,
+        protected_namespaces=(),
+    )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
-        return pprint.pformat(self.dict(by_alias=True))
+        return pprint.pformat(self.model_dump(by_alias=True))
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> V2HPAScalingPolicy:
+    def from_json(cls, json_str: str) -> Optional[Self]:
         """Create an instance of V2HPAScalingPolicy from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.dict(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        * Fields in `self.additional_properties` are added to the output dict.
+        """
+        excluded_fields: Set[str] = set([
+            "additional_properties",
+        ])
+
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude=excluded_fields,
+            exclude_none=True,
+        )
+        # puts key-value pairs in additional_properties in the top level
+        if self.additional_properties is not None:
+            for _key, _value in self.additional_properties.items():
+                _dict[_key] = _value
+
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> V2HPAScalingPolicy:
+    def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
         """Create an instance of V2HPAScalingPolicy from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return V2HPAScalingPolicy.parse_obj(obj)
+            return cls.model_validate(obj)
 
-        _obj = V2HPAScalingPolicy.parse_obj({
-            "period_seconds": obj.get("periodSeconds"),
+        _obj = cls.model_validate({
+            "periodSeconds": obj.get("periodSeconds"),
             "type": obj.get("type"),
             "value": obj.get("value")
         })
+        # store additional fields in additional_properties
+        for _key in obj.keys():
+            if _key not in cls.__properties:
+                _obj.additional_properties[_key] = obj.get(_key)
+
         return _obj
 
 

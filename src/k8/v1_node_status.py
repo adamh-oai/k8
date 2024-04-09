@@ -17,9 +17,8 @@ import pprint
 import re  # noqa: F401
 import json
 
-
-from typing import Dict, List, Optional
-from pydantic import BaseModel, Field, StrictStr, conlist
+from pydantic import BaseModel, ConfigDict, Field, StrictStr
+from typing import Any, ClassVar, Dict, List, Optional
 from .v1_attached_volume import V1AttachedVolume
 from .v1_container_image import V1ContainerImage
 from .v1_node_address import V1NodeAddress
@@ -27,48 +26,68 @@ from .v1_node_condition import V1NodeCondition
 from .v1_node_config_status import V1NodeConfigStatus
 from .v1_node_daemon_endpoints import V1NodeDaemonEndpoints
 from .v1_node_system_info import V1NodeSystemInfo
+from typing import Optional, Set
+from typing_extensions import Self
 
 class V1NodeStatus(BaseModel):
     """
-    NodeStatus is information about the current status of a node.  # noqa: E501
-    """
-    addresses: Optional[list[V1NodeAddress]] = Field(default=None, description="List of addresses reachable to the node. Queried from cloud provider, if available. More info: https://kubernetes.io/docs/concepts/nodes/node/#addresses Note: This field is declared as mergeable, but the merge key is not sufficiently unique, which can cause data corruption when it is merged. Callers should instead use a full-replacement patch. See https://pr.k8s.io/79391 for an example. Consumers should assume that addresses can change during the lifetime of a Node. However, there are some exceptions where this may not be possible, such as Pods that inherit a Node's address in its own status or consumers of the downward API (status.hostIP).")
+    NodeStatus is information about the current status of a node.
+    """ # noqa: E501
+    addresses: Optional[List[V1NodeAddress]] = Field(default=None, description="List of addresses reachable to the node. Queried from cloud provider, if available. More info: https://kubernetes.io/docs/concepts/nodes/node/#addresses Note: This field is declared as mergeable, but the merge key is not sufficiently unique, which can cause data corruption when it is merged. Callers should instead use a full-replacement patch. See https://pr.k8s.io/79391 for an example. Consumers should assume that addresses can change during the lifetime of a Node. However, there are some exceptions where this may not be possible, such as Pods that inherit a Node's address in its own status or consumers of the downward API (status.hostIP).")
     allocatable: Optional[Dict[str, StrictStr]] = Field(default=None, description="Allocatable represents the resources of a node that are available for scheduling. Defaults to Capacity.")
     capacity: Optional[Dict[str, StrictStr]] = Field(default=None, description="Capacity represents the total resources of a node. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#capacity")
-    conditions: Optional[list[V1NodeCondition]] = Field(default=None, description="Conditions is an array of current observed node conditions. More info: https://kubernetes.io/docs/concepts/nodes/node/#condition")
+    conditions: Optional[List[V1NodeCondition]] = Field(default=None, description="Conditions is an array of current observed node conditions. More info: https://kubernetes.io/docs/concepts/nodes/node/#condition")
     config: Optional[V1NodeConfigStatus] = None
     daemon_endpoints: Optional[V1NodeDaemonEndpoints] = Field(default=None, alias="daemonEndpoints")
-    images: Optional[list[V1ContainerImage]] = Field(default=None, description="List of container images on this node")
+    images: Optional[List[V1ContainerImage]] = Field(default=None, description="List of container images on this node")
     node_info: Optional[V1NodeSystemInfo] = Field(default=None, alias="nodeInfo")
     phase: Optional[StrictStr] = Field(default=None, description="NodePhase is the recently observed lifecycle phase of the node. More info: https://kubernetes.io/docs/concepts/nodes/node/#phase The field is never populated, and now is deprecated.")
-    volumes_attached: Optional[list[V1AttachedVolume]] = Field(default=None, alias="volumesAttached", description="List of volumes that are attached to the node.")
-    volumes_in_use: Optional[list[StrictStr]] = Field(default=None, alias="volumesInUse", description="List of attachable volumes in use (mounted) by the node.")
-    __properties = ["addresses", "allocatable", "capacity", "conditions", "config", "daemonEndpoints", "images", "nodeInfo", "phase", "volumesAttached", "volumesInUse"]
+    volumes_attached: Optional[List[V1AttachedVolume]] = Field(default=None, description="List of volumes that are attached to the node.", alias="volumesAttached")
+    volumes_in_use: Optional[List[StrictStr]] = Field(default=None, description="List of attachable volumes in use (mounted) by the node.", alias="volumesInUse")
+    additional_properties: Dict[str, Any] = {}
+    __properties: ClassVar[List[str]] = ["addresses", "allocatable", "capacity", "conditions", "config", "daemonEndpoints", "images", "nodeInfo", "phase", "volumesAttached", "volumesInUse"]
 
-    class Config:
-        """Pydantic configuration"""
-        allow_population_by_field_name = True
-        validate_assignment = True
+    model_config = ConfigDict(
+        populate_by_name=True,
+        validate_assignment=True,
+        protected_namespaces=(),
+    )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
-        return pprint.pformat(self.dict(by_alias=True))
+        return pprint.pformat(self.model_dump(by_alias=True))
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> V1NodeStatus:
+    def from_json(cls, json_str: str) -> Optional[Self]:
         """Create an instance of V1NodeStatus from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.dict(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        * Fields in `self.additional_properties` are added to the output dict.
+        """
+        excluded_fields: Set[str] = set([
+            "additional_properties",
+        ])
+
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude=excluded_fields,
+            exclude_none=True,
+        )
         # override the default output from pydantic by calling `to_dict()` of each item in addresses (list)
         _items = []
         if self.addresses:
@@ -106,30 +125,40 @@ class V1NodeStatus(BaseModel):
                 if _item:
                     _items.append(_item.to_dict())
             _dict['volumesAttached'] = _items
+        # puts key-value pairs in additional_properties in the top level
+        if self.additional_properties is not None:
+            for _key, _value in self.additional_properties.items():
+                _dict[_key] = _value
+
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> V1NodeStatus:
+    def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
         """Create an instance of V1NodeStatus from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return V1NodeStatus.parse_obj(obj)
+            return cls.model_validate(obj)
 
-        _obj = V1NodeStatus.parse_obj({
-            "addresses": [V1NodeAddress.from_dict(_item) for _item in obj.get("addresses")] if obj.get("addresses") is not None else None,
+        _obj = cls.model_validate({
+            "addresses": [V1NodeAddress.from_dict(_item) for _item in obj["addresses"]] if obj.get("addresses") is not None else None,
             "allocatable": obj.get("allocatable"),
             "capacity": obj.get("capacity"),
-            "conditions": [V1NodeCondition.from_dict(_item) for _item in obj.get("conditions")] if obj.get("conditions") is not None else None,
-            "config": V1NodeConfigStatus.from_dict(obj.get("config")) if obj.get("config") is not None else None,
-            "daemon_endpoints": V1NodeDaemonEndpoints.from_dict(obj.get("daemonEndpoints")) if obj.get("daemonEndpoints") is not None else None,
-            "images": [V1ContainerImage.from_dict(_item) for _item in obj.get("images")] if obj.get("images") is not None else None,
-            "node_info": V1NodeSystemInfo.from_dict(obj.get("nodeInfo")) if obj.get("nodeInfo") is not None else None,
+            "conditions": [V1NodeCondition.from_dict(_item) for _item in obj["conditions"]] if obj.get("conditions") is not None else None,
+            "config": V1NodeConfigStatus.from_dict(obj["config"]) if obj.get("config") is not None else None,
+            "daemonEndpoints": V1NodeDaemonEndpoints.from_dict(obj["daemonEndpoints"]) if obj.get("daemonEndpoints") is not None else None,
+            "images": [V1ContainerImage.from_dict(_item) for _item in obj["images"]] if obj.get("images") is not None else None,
+            "nodeInfo": V1NodeSystemInfo.from_dict(obj["nodeInfo"]) if obj.get("nodeInfo") is not None else None,
             "phase": obj.get("phase"),
-            "volumes_attached": [V1AttachedVolume.from_dict(_item) for _item in obj.get("volumesAttached")] if obj.get("volumesAttached") is not None else None,
-            "volumes_in_use": obj.get("volumesInUse")
+            "volumesAttached": [V1AttachedVolume.from_dict(_item) for _item in obj["volumesAttached"]] if obj.get("volumesAttached") is not None else None,
+            "volumesInUse": obj.get("volumesInUse")
         })
+        # store additional fields in additional_properties
+        for _key in obj.keys():
+            if _key not in cls.__properties:
+                _obj.additional_properties[_key] = obj.get(_key)
+
         return _obj
 
 

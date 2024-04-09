@@ -17,67 +17,96 @@ import pprint
 import re  # noqa: F401
 import json
 
-
-from typing import Optional
-from pydantic import BaseModel, Field, StrictStr
+from pydantic import BaseModel, ConfigDict, Field, StrictStr
+from typing import Any, ClassVar, Dict, List, Optional
+from typing import Optional, Set
+from typing_extensions import Self
 
 class V1ObjectReference(BaseModel):
     """
-    ObjectReference contains enough information to let you inspect or modify the referred object.  # noqa: E501
-    """
-    api_version: Optional[StrictStr] = Field(default=None, alias="apiVersion", description="API version of the referent.")
-    field_path: Optional[StrictStr] = Field(default=None, alias="fieldPath", description="If referring to a piece of an object instead of an entire object, this string should contain a valid JSON/Go field access statement, such as desiredState.manifest.containers[2]. For example, if the object reference is to a container within a pod, this would take on a value like: \"spec.containers{name}\" (where \"name\" refers to the name of the container that triggered the event) or if no container name is specified \"spec.containers[2]\" (container with index 2 in this pod). This syntax is chosen only to have some well-defined way of referencing a part of an object.")
+    ObjectReference contains enough information to let you inspect or modify the referred object.
+    """ # noqa: E501
+    api_version: Optional[StrictStr] = Field(default=None, description="API version of the referent.", alias="apiVersion")
+    field_path: Optional[StrictStr] = Field(default=None, description="If referring to a piece of an object instead of an entire object, this string should contain a valid JSON/Go field access statement, such as desiredState.manifest.containers[2]. For example, if the object reference is to a container within a pod, this would take on a value like: \"spec.containers{name}\" (where \"name\" refers to the name of the container that triggered the event) or if no container name is specified \"spec.containers[2]\" (container with index 2 in this pod). This syntax is chosen only to have some well-defined way of referencing a part of an object.", alias="fieldPath")
     kind: Optional[StrictStr] = Field(default=None, description="Kind of the referent. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds")
     name: Optional[StrictStr] = Field(default=None, description="Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names")
     namespace: Optional[StrictStr] = Field(default=None, description="Namespace of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/")
-    resource_version: Optional[StrictStr] = Field(default=None, alias="resourceVersion", description="Specific resourceVersion to which this reference is made, if any. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency")
+    resource_version: Optional[StrictStr] = Field(default=None, description="Specific resourceVersion to which this reference is made, if any. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency", alias="resourceVersion")
     uid: Optional[StrictStr] = Field(default=None, description="UID of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids")
-    __properties = ["apiVersion", "fieldPath", "kind", "name", "namespace", "resourceVersion", "uid"]
+    additional_properties: Dict[str, Any] = {}
+    __properties: ClassVar[List[str]] = ["apiVersion", "fieldPath", "kind", "name", "namespace", "resourceVersion", "uid"]
 
-    class Config:
-        """Pydantic configuration"""
-        allow_population_by_field_name = True
-        validate_assignment = True
+    model_config = ConfigDict(
+        populate_by_name=True,
+        validate_assignment=True,
+        protected_namespaces=(),
+    )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
-        return pprint.pformat(self.dict(by_alias=True))
+        return pprint.pformat(self.model_dump(by_alias=True))
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> V1ObjectReference:
+    def from_json(cls, json_str: str) -> Optional[Self]:
         """Create an instance of V1ObjectReference from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.dict(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        * Fields in `self.additional_properties` are added to the output dict.
+        """
+        excluded_fields: Set[str] = set([
+            "additional_properties",
+        ])
+
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude=excluded_fields,
+            exclude_none=True,
+        )
+        # puts key-value pairs in additional_properties in the top level
+        if self.additional_properties is not None:
+            for _key, _value in self.additional_properties.items():
+                _dict[_key] = _value
+
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> V1ObjectReference:
+    def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
         """Create an instance of V1ObjectReference from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return V1ObjectReference.parse_obj(obj)
+            return cls.model_validate(obj)
 
-        _obj = V1ObjectReference.parse_obj({
-            "api_version": obj.get("apiVersion"),
-            "field_path": obj.get("fieldPath"),
+        _obj = cls.model_validate({
+            "apiVersion": obj.get("apiVersion"),
+            "fieldPath": obj.get("fieldPath"),
             "kind": obj.get("kind"),
             "name": obj.get("name"),
             "namespace": obj.get("namespace"),
-            "resource_version": obj.get("resourceVersion"),
+            "resourceVersion": obj.get("resourceVersion"),
             "uid": obj.get("uid")
         })
+        # store additional fields in additional_properties
+        for _key in obj.keys():
+            if _key not in cls.__properties:
+                _obj.additional_properties[_key] = obj.get(_key)
+
         return _obj
 
 

@@ -17,57 +17,86 @@ import pprint
 import re  # noqa: F401
 import json
 
-
-from typing import List, Optional
-from pydantic import BaseModel, Field, StrictStr, conlist
+from pydantic import BaseModel, ConfigDict, Field, StrictStr
+from typing import Any, ClassVar, Dict, List, Optional
+from typing import Optional, Set
+from typing_extensions import Self
 
 class V1alpha2PodSchedulingContextSpec(BaseModel):
     """
-    PodSchedulingContextSpec describes where resources for the Pod are needed.  # noqa: E501
-    """
-    potential_nodes: Optional[list[StrictStr]] = Field(default=None, alias="potentialNodes", description="PotentialNodes lists nodes where the Pod might be able to run.  The size of this field is limited to 128. This is large enough for many clusters. Larger clusters may need more attempts to find a node that suits all pending resources. This may get increased in the future, but not reduced.")
-    selected_node: Optional[StrictStr] = Field(default=None, alias="selectedNode", description="SelectedNode is the node for which allocation of ResourceClaims that are referenced by the Pod and that use \"WaitForFirstConsumer\" allocation is to be attempted.")
-    __properties = ["potentialNodes", "selectedNode"]
+    PodSchedulingContextSpec describes where resources for the Pod are needed.
+    """ # noqa: E501
+    potential_nodes: Optional[List[StrictStr]] = Field(default=None, description="PotentialNodes lists nodes where the Pod might be able to run.  The size of this field is limited to 128. This is large enough for many clusters. Larger clusters may need more attempts to find a node that suits all pending resources. This may get increased in the future, but not reduced.", alias="potentialNodes")
+    selected_node: Optional[StrictStr] = Field(default=None, description="SelectedNode is the node for which allocation of ResourceClaims that are referenced by the Pod and that use \"WaitForFirstConsumer\" allocation is to be attempted.", alias="selectedNode")
+    additional_properties: Dict[str, Any] = {}
+    __properties: ClassVar[List[str]] = ["potentialNodes", "selectedNode"]
 
-    class Config:
-        """Pydantic configuration"""
-        allow_population_by_field_name = True
-        validate_assignment = True
+    model_config = ConfigDict(
+        populate_by_name=True,
+        validate_assignment=True,
+        protected_namespaces=(),
+    )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
-        return pprint.pformat(self.dict(by_alias=True))
+        return pprint.pformat(self.model_dump(by_alias=True))
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> V1alpha2PodSchedulingContextSpec:
+    def from_json(cls, json_str: str) -> Optional[Self]:
         """Create an instance of V1alpha2PodSchedulingContextSpec from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.dict(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        * Fields in `self.additional_properties` are added to the output dict.
+        """
+        excluded_fields: Set[str] = set([
+            "additional_properties",
+        ])
+
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude=excluded_fields,
+            exclude_none=True,
+        )
+        # puts key-value pairs in additional_properties in the top level
+        if self.additional_properties is not None:
+            for _key, _value in self.additional_properties.items():
+                _dict[_key] = _value
+
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> V1alpha2PodSchedulingContextSpec:
+    def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
         """Create an instance of V1alpha2PodSchedulingContextSpec from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return V1alpha2PodSchedulingContextSpec.parse_obj(obj)
+            return cls.model_validate(obj)
 
-        _obj = V1alpha2PodSchedulingContextSpec.parse_obj({
-            "potential_nodes": obj.get("potentialNodes"),
-            "selected_node": obj.get("selectedNode")
+        _obj = cls.model_validate({
+            "potentialNodes": obj.get("potentialNodes"),
+            "selectedNode": obj.get("selectedNode")
         })
+        # store additional fields in additional_properties
+        for _key in obj.keys():
+            if _key not in cls.__properties:
+                _obj.additional_properties[_key] = obj.get(_key)
+
         return _obj
 
 

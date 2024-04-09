@@ -17,65 +17,94 @@ import pprint
 import re  # noqa: F401
 import json
 
-
-from typing import Optional
-from pydantic import BaseModel, Field, StrictBool, StrictStr
+from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictStr
+from typing import Any, ClassVar, Dict, List, Optional
+from typing import Optional, Set
+from typing_extensions import Self
 
 class V1AzureDiskVolumeSource(BaseModel):
     """
-    AzureDisk represents an Azure Data Disk mount on the host and bind mount to the pod.  # noqa: E501
-    """
-    caching_mode: Optional[StrictStr] = Field(default=None, alias="cachingMode", description="cachingMode is the Host Caching mode: None, Read Only, Read Write.")
-    disk_name: StrictStr = Field(..., alias="diskName", description="diskName is the Name of the data disk in the blob storage")
-    disk_uri: StrictStr = Field(..., alias="diskURI", description="diskURI is the URI of data disk in the blob storage")
-    fs_type: Optional[StrictStr] = Field(default=None, alias="fsType", description="fsType is Filesystem type to mount. Must be a filesystem type supported by the host operating system. Ex. \"ext4\", \"xfs\", \"ntfs\". Implicitly inferred to be \"ext4\" if unspecified.")
+    AzureDisk represents an Azure Data Disk mount on the host and bind mount to the pod.
+    """ # noqa: E501
+    caching_mode: Optional[StrictStr] = Field(default=None, description="cachingMode is the Host Caching mode: None, Read Only, Read Write.", alias="cachingMode")
+    disk_name: StrictStr = Field(description="diskName is the Name of the data disk in the blob storage", alias="diskName")
+    disk_uri: StrictStr = Field(description="diskURI is the URI of data disk in the blob storage", alias="diskURI")
+    fs_type: Optional[StrictStr] = Field(default=None, description="fsType is Filesystem type to mount. Must be a filesystem type supported by the host operating system. Ex. \"ext4\", \"xfs\", \"ntfs\". Implicitly inferred to be \"ext4\" if unspecified.", alias="fsType")
     kind: Optional[StrictStr] = Field(default=None, description="kind expected values are Shared: multiple blob disks per storage account  Dedicated: single blob disk per storage account  Managed: azure managed data disk (only in managed availability set). defaults to shared")
-    read_only: Optional[StrictBool] = Field(default=None, alias="readOnly", description="readOnly Defaults to false (read/write). ReadOnly here will force the ReadOnly setting in VolumeMounts.")
-    __properties = ["cachingMode", "diskName", "diskURI", "fsType", "kind", "readOnly"]
+    read_only: Optional[StrictBool] = Field(default=None, description="readOnly Defaults to false (read/write). ReadOnly here will force the ReadOnly setting in VolumeMounts.", alias="readOnly")
+    additional_properties: Dict[str, Any] = {}
+    __properties: ClassVar[List[str]] = ["cachingMode", "diskName", "diskURI", "fsType", "kind", "readOnly"]
 
-    class Config:
-        """Pydantic configuration"""
-        allow_population_by_field_name = True
-        validate_assignment = True
+    model_config = ConfigDict(
+        populate_by_name=True,
+        validate_assignment=True,
+        protected_namespaces=(),
+    )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
-        return pprint.pformat(self.dict(by_alias=True))
+        return pprint.pformat(self.model_dump(by_alias=True))
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> V1AzureDiskVolumeSource:
+    def from_json(cls, json_str: str) -> Optional[Self]:
         """Create an instance of V1AzureDiskVolumeSource from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.dict(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        * Fields in `self.additional_properties` are added to the output dict.
+        """
+        excluded_fields: Set[str] = set([
+            "additional_properties",
+        ])
+
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude=excluded_fields,
+            exclude_none=True,
+        )
+        # puts key-value pairs in additional_properties in the top level
+        if self.additional_properties is not None:
+            for _key, _value in self.additional_properties.items():
+                _dict[_key] = _value
+
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> V1AzureDiskVolumeSource:
+    def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
         """Create an instance of V1AzureDiskVolumeSource from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return V1AzureDiskVolumeSource.parse_obj(obj)
+            return cls.model_validate(obj)
 
-        _obj = V1AzureDiskVolumeSource.parse_obj({
-            "caching_mode": obj.get("cachingMode"),
-            "disk_name": obj.get("diskName"),
-            "disk_uri": obj.get("diskURI"),
-            "fs_type": obj.get("fsType"),
+        _obj = cls.model_validate({
+            "cachingMode": obj.get("cachingMode"),
+            "diskName": obj.get("diskName"),
+            "diskURI": obj.get("diskURI"),
+            "fsType": obj.get("fsType"),
             "kind": obj.get("kind"),
-            "read_only": obj.get("readOnly")
+            "readOnly": obj.get("readOnly")
         })
+        # store additional fields in additional_properties
+        for _key in obj.keys():
+            if _key not in cls.__properties:
+                _obj.additional_properties[_key] = obj.get(_key)
+
         return _obj
 
 

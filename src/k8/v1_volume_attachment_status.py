@@ -17,68 +17,97 @@ import pprint
 import re  # noqa: F401
 import json
 
-
-from typing import Dict, Optional
-from pydantic import BaseModel, Field, StrictBool, StrictStr
+from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictStr
+from typing import Any, ClassVar, Dict, List, Optional
 from .v1_volume_error import V1VolumeError
+from typing import Optional, Set
+from typing_extensions import Self
 
 class V1VolumeAttachmentStatus(BaseModel):
     """
-    VolumeAttachmentStatus is the status of a VolumeAttachment request.  # noqa: E501
-    """
+    VolumeAttachmentStatus is the status of a VolumeAttachment request.
+    """ # noqa: E501
     attach_error: Optional[V1VolumeError] = Field(default=None, alias="attachError")
-    attached: StrictBool = Field(..., description="attached indicates the volume is successfully attached. This field must only be set by the entity completing the attach operation, i.e. the external-attacher.")
-    attachment_metadata: Optional[Dict[str, StrictStr]] = Field(default=None, alias="attachmentMetadata", description="attachmentMetadata is populated with any information returned by the attach operation, upon successful attach, that must be passed into subsequent WaitForAttach or Mount calls. This field must only be set by the entity completing the attach operation, i.e. the external-attacher.")
+    attached: StrictBool = Field(description="attached indicates the volume is successfully attached. This field must only be set by the entity completing the attach operation, i.e. the external-attacher.")
+    attachment_metadata: Optional[Dict[str, StrictStr]] = Field(default=None, description="attachmentMetadata is populated with any information returned by the attach operation, upon successful attach, that must be passed into subsequent WaitForAttach or Mount calls. This field must only be set by the entity completing the attach operation, i.e. the external-attacher.", alias="attachmentMetadata")
     detach_error: Optional[V1VolumeError] = Field(default=None, alias="detachError")
-    __properties = ["attachError", "attached", "attachmentMetadata", "detachError"]
+    additional_properties: Dict[str, Any] = {}
+    __properties: ClassVar[List[str]] = ["attachError", "attached", "attachmentMetadata", "detachError"]
 
-    class Config:
-        """Pydantic configuration"""
-        allow_population_by_field_name = True
-        validate_assignment = True
+    model_config = ConfigDict(
+        populate_by_name=True,
+        validate_assignment=True,
+        protected_namespaces=(),
+    )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
-        return pprint.pformat(self.dict(by_alias=True))
+        return pprint.pformat(self.model_dump(by_alias=True))
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> V1VolumeAttachmentStatus:
+    def from_json(cls, json_str: str) -> Optional[Self]:
         """Create an instance of V1VolumeAttachmentStatus from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.dict(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        * Fields in `self.additional_properties` are added to the output dict.
+        """
+        excluded_fields: Set[str] = set([
+            "additional_properties",
+        ])
+
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude=excluded_fields,
+            exclude_none=True,
+        )
         # override the default output from pydantic by calling `to_dict()` of attach_error
         if self.attach_error:
             _dict['attachError'] = self.attach_error.to_dict()
         # override the default output from pydantic by calling `to_dict()` of detach_error
         if self.detach_error:
             _dict['detachError'] = self.detach_error.to_dict()
+        # puts key-value pairs in additional_properties in the top level
+        if self.additional_properties is not None:
+            for _key, _value in self.additional_properties.items():
+                _dict[_key] = _value
+
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> V1VolumeAttachmentStatus:
+    def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
         """Create an instance of V1VolumeAttachmentStatus from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return V1VolumeAttachmentStatus.parse_obj(obj)
+            return cls.model_validate(obj)
 
-        _obj = V1VolumeAttachmentStatus.parse_obj({
-            "attach_error": V1VolumeError.from_dict(obj.get("attachError")) if obj.get("attachError") is not None else None,
+        _obj = cls.model_validate({
+            "attachError": V1VolumeError.from_dict(obj["attachError"]) if obj.get("attachError") is not None else None,
             "attached": obj.get("attached"),
-            "attachment_metadata": obj.get("attachmentMetadata"),
-            "detach_error": V1VolumeError.from_dict(obj.get("detachError")) if obj.get("detachError") is not None else None
+            "attachmentMetadata": obj.get("attachmentMetadata"),
+            "detachError": V1VolumeError.from_dict(obj["detachError"]) if obj.get("detachError") is not None else None
         })
+        # store additional fields in additional_properties
+        for _key in obj.keys():
+            if _key not in cls.__properties:
+                _obj.additional_properties[_key] = obj.get(_key)
+
         return _obj
 
 

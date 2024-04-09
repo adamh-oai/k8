@@ -17,59 +17,88 @@ import pprint
 import re  # noqa: F401
 import json
 
-
-from typing import Optional
-from pydantic import BaseModel, Field, StrictStr
+from pydantic import BaseModel, ConfigDict, Field, StrictStr
+from typing import Any, ClassVar, Dict, List, Optional
+from typing import Optional, Set
+from typing_extensions import Self
 
 class V1alpha2ResourceClaimParametersReference(BaseModel):
     """
-    ResourceClaimParametersReference contains enough information to let you locate the parameters for a ResourceClaim. The object must be in the same namespace as the ResourceClaim.  # noqa: E501
-    """
-    api_group: Optional[StrictStr] = Field(default=None, alias="apiGroup", description="APIGroup is the group for the resource being referenced. It is empty for the core API. This matches the group in the APIVersion that is used when creating the resources.")
-    kind: StrictStr = Field(..., description="Kind is the type of resource being referenced. This is the same value as in the parameter object's metadata, for example \"ConfigMap\".")
-    name: StrictStr = Field(..., description="Name is the name of resource being referenced.")
-    __properties = ["apiGroup", "kind", "name"]
+    ResourceClaimParametersReference contains enough information to let you locate the parameters for a ResourceClaim. The object must be in the same namespace as the ResourceClaim.
+    """ # noqa: E501
+    api_group: Optional[StrictStr] = Field(default=None, description="APIGroup is the group for the resource being referenced. It is empty for the core API. This matches the group in the APIVersion that is used when creating the resources.", alias="apiGroup")
+    kind: StrictStr = Field(description="Kind is the type of resource being referenced. This is the same value as in the parameter object's metadata, for example \"ConfigMap\".")
+    name: StrictStr = Field(description="Name is the name of resource being referenced.")
+    additional_properties: Dict[str, Any] = {}
+    __properties: ClassVar[List[str]] = ["apiGroup", "kind", "name"]
 
-    class Config:
-        """Pydantic configuration"""
-        allow_population_by_field_name = True
-        validate_assignment = True
+    model_config = ConfigDict(
+        populate_by_name=True,
+        validate_assignment=True,
+        protected_namespaces=(),
+    )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
-        return pprint.pformat(self.dict(by_alias=True))
+        return pprint.pformat(self.model_dump(by_alias=True))
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> V1alpha2ResourceClaimParametersReference:
+    def from_json(cls, json_str: str) -> Optional[Self]:
         """Create an instance of V1alpha2ResourceClaimParametersReference from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.dict(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        * Fields in `self.additional_properties` are added to the output dict.
+        """
+        excluded_fields: Set[str] = set([
+            "additional_properties",
+        ])
+
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude=excluded_fields,
+            exclude_none=True,
+        )
+        # puts key-value pairs in additional_properties in the top level
+        if self.additional_properties is not None:
+            for _key, _value in self.additional_properties.items():
+                _dict[_key] = _value
+
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> V1alpha2ResourceClaimParametersReference:
+    def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
         """Create an instance of V1alpha2ResourceClaimParametersReference from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return V1alpha2ResourceClaimParametersReference.parse_obj(obj)
+            return cls.model_validate(obj)
 
-        _obj = V1alpha2ResourceClaimParametersReference.parse_obj({
-            "api_group": obj.get("apiGroup"),
+        _obj = cls.model_validate({
+            "apiGroup": obj.get("apiGroup"),
             "kind": obj.get("kind"),
             "name": obj.get("name")
         })
+        # store additional fields in additional_properties
+        for _key in obj.keys():
+            if _key not in cls.__properties:
+                _obj.additional_properties[_key] = obj.get(_key)
+
         return _obj
 
 

@@ -17,46 +17,65 @@ import pprint
 import re  # noqa: F401
 import json
 
-
-from typing import List, Optional
-from pydantic import BaseModel, Field, StrictStr, conlist
+from pydantic import BaseModel, ConfigDict, Field, StrictStr
+from typing import Any, ClassVar, Dict, List, Optional
 from .v1_list_meta import V1ListMeta
 from .v1_volume_attachment import V1VolumeAttachment
+from typing import Optional, Set
+from typing_extensions import Self
 
 class V1VolumeAttachmentList(BaseModel):
     """
-    VolumeAttachmentList is a collection of VolumeAttachment objects.  # noqa: E501
-    """
-    api_version: Optional[StrictStr] = Field(default=None, alias="apiVersion", description="APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources")
-    items: list[V1VolumeAttachment] = Field(..., description="items is the list of VolumeAttachments")
+    VolumeAttachmentList is a collection of VolumeAttachment objects.
+    """ # noqa: E501
+    api_version: Optional[StrictStr] = Field(default=None, description="APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources", alias="apiVersion")
+    items: List[V1VolumeAttachment] = Field(description="items is the list of VolumeAttachments")
     kind: Optional[StrictStr] = Field(default=None, description="Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds")
     metadata: Optional[V1ListMeta] = None
-    __properties = ["apiVersion", "items", "kind", "metadata"]
+    additional_properties: Dict[str, Any] = {}
+    __properties: ClassVar[List[str]] = ["apiVersion", "items", "kind", "metadata"]
 
-    class Config:
-        """Pydantic configuration"""
-        allow_population_by_field_name = True
-        validate_assignment = True
+    model_config = ConfigDict(
+        populate_by_name=True,
+        validate_assignment=True,
+        protected_namespaces=(),
+    )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
-        return pprint.pformat(self.dict(by_alias=True))
+        return pprint.pformat(self.model_dump(by_alias=True))
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> V1VolumeAttachmentList:
+    def from_json(cls, json_str: str) -> Optional[Self]:
         """Create an instance of V1VolumeAttachmentList from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.dict(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        * Fields in `self.additional_properties` are added to the output dict.
+        """
+        excluded_fields: Set[str] = set([
+            "additional_properties",
+        ])
+
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude=excluded_fields,
+            exclude_none=True,
+        )
         # override the default output from pydantic by calling `to_dict()` of each item in items (list)
         _items = []
         if self.items:
@@ -67,23 +86,33 @@ class V1VolumeAttachmentList(BaseModel):
         # override the default output from pydantic by calling `to_dict()` of metadata
         if self.metadata:
             _dict['metadata'] = self.metadata.to_dict()
+        # puts key-value pairs in additional_properties in the top level
+        if self.additional_properties is not None:
+            for _key, _value in self.additional_properties.items():
+                _dict[_key] = _value
+
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> V1VolumeAttachmentList:
+    def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
         """Create an instance of V1VolumeAttachmentList from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return V1VolumeAttachmentList.parse_obj(obj)
+            return cls.model_validate(obj)
 
-        _obj = V1VolumeAttachmentList.parse_obj({
-            "api_version": obj.get("apiVersion"),
-            "items": [V1VolumeAttachment.from_dict(_item) for _item in obj.get("items")] if obj.get("items") is not None else None,
+        _obj = cls.model_validate({
+            "apiVersion": obj.get("apiVersion"),
+            "items": [V1VolumeAttachment.from_dict(_item) for _item in obj["items"]] if obj.get("items") is not None else None,
             "kind": obj.get("kind"),
-            "metadata": V1ListMeta.from_dict(obj.get("metadata")) if obj.get("metadata") is not None else None
+            "metadata": V1ListMeta.from_dict(obj["metadata"]) if obj.get("metadata") is not None else None
         })
+        # store additional fields in additional_properties
+        for _key in obj.keys():
+            if _key not in cls.__properties:
+                _obj.additional_properties[_key] = obj.get(_key)
+
         return _obj
 
 

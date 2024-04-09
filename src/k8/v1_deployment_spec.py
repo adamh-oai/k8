@@ -17,51 +17,70 @@ import pprint
 import re  # noqa: F401
 import json
 
-
-from typing import Optional
-from pydantic import BaseModel, Field, StrictBool, StrictInt
+from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictInt
+from typing import Any, ClassVar, Dict, List, Optional
 from .v1_deployment_strategy import V1DeploymentStrategy
 from .v1_label_selector import V1LabelSelector
 from .v1_pod_template_spec import V1PodTemplateSpec
+from typing import Optional, Set
+from typing_extensions import Self
 
 class V1DeploymentSpec(BaseModel):
     """
-    DeploymentSpec is the specification of the desired behavior of the Deployment.  # noqa: E501
-    """
-    min_ready_seconds: Optional[StrictInt] = Field(default=None, alias="minReadySeconds", description="Minimum number of seconds for which a newly created pod should be ready without any of its container crashing, for it to be considered available. Defaults to 0 (pod will be considered available as soon as it is ready)")
+    DeploymentSpec is the specification of the desired behavior of the Deployment.
+    """ # noqa: E501
+    min_ready_seconds: Optional[StrictInt] = Field(default=None, description="Minimum number of seconds for which a newly created pod should be ready without any of its container crashing, for it to be considered available. Defaults to 0 (pod will be considered available as soon as it is ready)", alias="minReadySeconds")
     paused: Optional[StrictBool] = Field(default=None, description="Indicates that the deployment is paused.")
-    progress_deadline_seconds: Optional[StrictInt] = Field(default=None, alias="progressDeadlineSeconds", description="The maximum time in seconds for a deployment to make progress before it is considered to be failed. The deployment controller will continue to process failed deployments and a condition with a ProgressDeadlineExceeded reason will be surfaced in the deployment status. Note that progress will not be estimated during the time a deployment is paused. Defaults to 600s.")
+    progress_deadline_seconds: Optional[StrictInt] = Field(default=None, description="The maximum time in seconds for a deployment to make progress before it is considered to be failed. The deployment controller will continue to process failed deployments and a condition with a ProgressDeadlineExceeded reason will be surfaced in the deployment status. Note that progress will not be estimated during the time a deployment is paused. Defaults to 600s.", alias="progressDeadlineSeconds")
     replicas: Optional[StrictInt] = Field(default=None, description="Number of desired pods. This is a pointer to distinguish between explicit zero and not specified. Defaults to 1.")
-    revision_history_limit: Optional[StrictInt] = Field(default=None, alias="revisionHistoryLimit", description="The number of old ReplicaSets to retain to allow rollback. This is a pointer to distinguish between explicit zero and not specified. Defaults to 10.")
-    selector: V1LabelSelector = Field(...)
+    revision_history_limit: Optional[StrictInt] = Field(default=None, description="The number of old ReplicaSets to retain to allow rollback. This is a pointer to distinguish between explicit zero and not specified. Defaults to 10.", alias="revisionHistoryLimit")
+    selector: V1LabelSelector
     strategy: Optional[V1DeploymentStrategy] = None
-    template: V1PodTemplateSpec = Field(...)
-    __properties = ["minReadySeconds", "paused", "progressDeadlineSeconds", "replicas", "revisionHistoryLimit", "selector", "strategy", "template"]
+    template: V1PodTemplateSpec
+    additional_properties: Dict[str, Any] = {}
+    __properties: ClassVar[List[str]] = ["minReadySeconds", "paused", "progressDeadlineSeconds", "replicas", "revisionHistoryLimit", "selector", "strategy", "template"]
 
-    class Config:
-        """Pydantic configuration"""
-        allow_population_by_field_name = True
-        validate_assignment = True
+    model_config = ConfigDict(
+        populate_by_name=True,
+        validate_assignment=True,
+        protected_namespaces=(),
+    )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
-        return pprint.pformat(self.dict(by_alias=True))
+        return pprint.pformat(self.model_dump(by_alias=True))
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> V1DeploymentSpec:
+    def from_json(cls, json_str: str) -> Optional[Self]:
         """Create an instance of V1DeploymentSpec from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.dict(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        * Fields in `self.additional_properties` are added to the output dict.
+        """
+        excluded_fields: Set[str] = set([
+            "additional_properties",
+        ])
+
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude=excluded_fields,
+            exclude_none=True,
+        )
         # override the default output from pydantic by calling `to_dict()` of selector
         if self.selector:
             _dict['selector'] = self.selector.to_dict()
@@ -71,27 +90,37 @@ class V1DeploymentSpec(BaseModel):
         # override the default output from pydantic by calling `to_dict()` of template
         if self.template:
             _dict['template'] = self.template.to_dict()
+        # puts key-value pairs in additional_properties in the top level
+        if self.additional_properties is not None:
+            for _key, _value in self.additional_properties.items():
+                _dict[_key] = _value
+
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> V1DeploymentSpec:
+    def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
         """Create an instance of V1DeploymentSpec from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return V1DeploymentSpec.parse_obj(obj)
+            return cls.model_validate(obj)
 
-        _obj = V1DeploymentSpec.parse_obj({
-            "min_ready_seconds": obj.get("minReadySeconds"),
+        _obj = cls.model_validate({
+            "minReadySeconds": obj.get("minReadySeconds"),
             "paused": obj.get("paused"),
-            "progress_deadline_seconds": obj.get("progressDeadlineSeconds"),
+            "progressDeadlineSeconds": obj.get("progressDeadlineSeconds"),
             "replicas": obj.get("replicas"),
-            "revision_history_limit": obj.get("revisionHistoryLimit"),
-            "selector": V1LabelSelector.from_dict(obj.get("selector")) if obj.get("selector") is not None else None,
-            "strategy": V1DeploymentStrategy.from_dict(obj.get("strategy")) if obj.get("strategy") is not None else None,
-            "template": V1PodTemplateSpec.from_dict(obj.get("template")) if obj.get("template") is not None else None
+            "revisionHistoryLimit": obj.get("revisionHistoryLimit"),
+            "selector": V1LabelSelector.from_dict(obj["selector"]) if obj.get("selector") is not None else None,
+            "strategy": V1DeploymentStrategy.from_dict(obj["strategy"]) if obj.get("strategy") is not None else None,
+            "template": V1PodTemplateSpec.from_dict(obj["template"]) if obj.get("template") is not None else None
         })
+        # store additional fields in additional_properties
+        for _key in obj.keys():
+            if _key not in cls.__properties:
+                _obj.additional_properties[_key] = obj.get(_key)
+
         return _obj
 
 

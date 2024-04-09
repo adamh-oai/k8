@@ -17,53 +17,72 @@ import pprint
 import re  # noqa: F401
 import json
 
-
-from typing import List, Optional
-from pydantic import BaseModel, Field, StrictStr, conlist
+from pydantic import BaseModel, ConfigDict, Field, StrictStr
+from typing import Any, ClassVar, Dict, List, Optional
 from .v1alpha1_audit_annotation import V1alpha1AuditAnnotation
 from .v1alpha1_match_condition import V1alpha1MatchCondition
 from .v1alpha1_match_resources import V1alpha1MatchResources
 from .v1alpha1_param_kind import V1alpha1ParamKind
 from .v1alpha1_validation import V1alpha1Validation
 from .v1alpha1_variable import V1alpha1Variable
+from typing import Optional, Set
+from typing_extensions import Self
 
 class V1alpha1ValidatingAdmissionPolicySpec(BaseModel):
     """
-    ValidatingAdmissionPolicySpec is the specification of the desired behavior of the AdmissionPolicy.  # noqa: E501
-    """
-    audit_annotations: Optional[list[V1alpha1AuditAnnotation]] = Field(default=None, alias="auditAnnotations", description="auditAnnotations contains CEL expressions which are used to produce audit annotations for the audit event of the API request. validations and auditAnnotations may not both be empty; a least one of validations or auditAnnotations is required.")
-    failure_policy: Optional[StrictStr] = Field(default=None, alias="failurePolicy", description="failurePolicy defines how to handle failures for the admission policy. Failures can occur from CEL expression parse errors, type check errors, runtime errors and invalid or mis-configured policy definitions or bindings.  A policy is invalid if spec.paramKind refers to a non-existent Kind. A binding is invalid if spec.paramRef.name refers to a non-existent resource.  failurePolicy does not define how validations that evaluate to false are handled.  When failurePolicy is set to Fail, ValidatingAdmissionPolicyBinding validationActions define how failures are enforced.  Allowed values are Ignore or Fail. Defaults to Fail.")
-    match_conditions: Optional[list[V1alpha1MatchCondition]] = Field(default=None, alias="matchConditions", description="MatchConditions is a list of conditions that must be met for a request to be validated. Match conditions filter requests that have already been matched by the rules, namespaceSelector, and objectSelector. An empty list of matchConditions matches all requests. There are a maximum of 64 match conditions allowed.  If a parameter object is provided, it can be accessed via the `params` handle in the same manner as validation expressions.  The exact matching logic is (in order):   1. If ANY matchCondition evaluates to FALSE, the policy is skipped.   2. If ALL matchConditions evaluate to TRUE, the policy is evaluated.   3. If any matchCondition evaluates to an error (but none are FALSE):      - If failurePolicy=Fail, reject the request      - If failurePolicy=Ignore, the policy is skipped")
+    ValidatingAdmissionPolicySpec is the specification of the desired behavior of the AdmissionPolicy.
+    """ # noqa: E501
+    audit_annotations: Optional[List[V1alpha1AuditAnnotation]] = Field(default=None, description="auditAnnotations contains CEL expressions which are used to produce audit annotations for the audit event of the API request. validations and auditAnnotations may not both be empty; a least one of validations or auditAnnotations is required.", alias="auditAnnotations")
+    failure_policy: Optional[StrictStr] = Field(default=None, description="failurePolicy defines how to handle failures for the admission policy. Failures can occur from CEL expression parse errors, type check errors, runtime errors and invalid or mis-configured policy definitions or bindings.  A policy is invalid if spec.paramKind refers to a non-existent Kind. A binding is invalid if spec.paramRef.name refers to a non-existent resource.  failurePolicy does not define how validations that evaluate to false are handled.  When failurePolicy is set to Fail, ValidatingAdmissionPolicyBinding validationActions define how failures are enforced.  Allowed values are Ignore or Fail. Defaults to Fail.", alias="failurePolicy")
+    match_conditions: Optional[List[V1alpha1MatchCondition]] = Field(default=None, description="MatchConditions is a list of conditions that must be met for a request to be validated. Match conditions filter requests that have already been matched by the rules, namespaceSelector, and objectSelector. An empty list of matchConditions matches all requests. There are a maximum of 64 match conditions allowed.  If a parameter object is provided, it can be accessed via the `params` handle in the same manner as validation expressions.  The exact matching logic is (in order):   1. If ANY matchCondition evaluates to FALSE, the policy is skipped.   2. If ALL matchConditions evaluate to TRUE, the policy is evaluated.   3. If any matchCondition evaluates to an error (but none are FALSE):      - If failurePolicy=Fail, reject the request      - If failurePolicy=Ignore, the policy is skipped", alias="matchConditions")
     match_constraints: Optional[V1alpha1MatchResources] = Field(default=None, alias="matchConstraints")
     param_kind: Optional[V1alpha1ParamKind] = Field(default=None, alias="paramKind")
-    validations: Optional[list[V1alpha1Validation]] = Field(default=None, description="Validations contain CEL expressions which is used to apply the validation. Validations and AuditAnnotations may not both be empty; a minimum of one Validations or AuditAnnotations is required.")
-    variables: Optional[list[V1alpha1Variable]] = Field(default=None, description="Variables contain definitions of variables that can be used in composition of other expressions. Each variable is defined as a named CEL expression. The variables defined here will be available under `variables` in other expressions of the policy except MatchConditions because MatchConditions are evaluated before the rest of the policy.  The expression of a variable can refer to other variables defined earlier in the list but not those after. Thus, Variables must be sorted by the order of first appearance and acyclic.")
-    __properties = ["auditAnnotations", "failurePolicy", "matchConditions", "matchConstraints", "paramKind", "validations", "variables"]
+    validations: Optional[List[V1alpha1Validation]] = Field(default=None, description="Validations contain CEL expressions which is used to apply the validation. Validations and AuditAnnotations may not both be empty; a minimum of one Validations or AuditAnnotations is required.")
+    variables: Optional[List[V1alpha1Variable]] = Field(default=None, description="Variables contain definitions of variables that can be used in composition of other expressions. Each variable is defined as a named CEL expression. The variables defined here will be available under `variables` in other expressions of the policy except MatchConditions because MatchConditions are evaluated before the rest of the policy.  The expression of a variable can refer to other variables defined earlier in the list but not those after. Thus, Variables must be sorted by the order of first appearance and acyclic.")
+    additional_properties: Dict[str, Any] = {}
+    __properties: ClassVar[List[str]] = ["auditAnnotations", "failurePolicy", "matchConditions", "matchConstraints", "paramKind", "validations", "variables"]
 
-    class Config:
-        """Pydantic configuration"""
-        allow_population_by_field_name = True
-        validate_assignment = True
+    model_config = ConfigDict(
+        populate_by_name=True,
+        validate_assignment=True,
+        protected_namespaces=(),
+    )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
-        return pprint.pformat(self.dict(by_alias=True))
+        return pprint.pformat(self.model_dump(by_alias=True))
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> V1alpha1ValidatingAdmissionPolicySpec:
+    def from_json(cls, json_str: str) -> Optional[Self]:
         """Create an instance of V1alpha1ValidatingAdmissionPolicySpec from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.dict(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        * Fields in `self.additional_properties` are added to the output dict.
+        """
+        excluded_fields: Set[str] = set([
+            "additional_properties",
+        ])
+
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude=excluded_fields,
+            exclude_none=True,
+        )
         # override the default output from pydantic by calling `to_dict()` of each item in audit_annotations (list)
         _items = []
         if self.audit_annotations:
@@ -98,26 +117,36 @@ class V1alpha1ValidatingAdmissionPolicySpec(BaseModel):
                 if _item:
                     _items.append(_item.to_dict())
             _dict['variables'] = _items
+        # puts key-value pairs in additional_properties in the top level
+        if self.additional_properties is not None:
+            for _key, _value in self.additional_properties.items():
+                _dict[_key] = _value
+
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> V1alpha1ValidatingAdmissionPolicySpec:
+    def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
         """Create an instance of V1alpha1ValidatingAdmissionPolicySpec from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return V1alpha1ValidatingAdmissionPolicySpec.parse_obj(obj)
+            return cls.model_validate(obj)
 
-        _obj = V1alpha1ValidatingAdmissionPolicySpec.parse_obj({
-            "audit_annotations": [V1alpha1AuditAnnotation.from_dict(_item) for _item in obj.get("auditAnnotations")] if obj.get("auditAnnotations") is not None else None,
-            "failure_policy": obj.get("failurePolicy"),
-            "match_conditions": [V1alpha1MatchCondition.from_dict(_item) for _item in obj.get("matchConditions")] if obj.get("matchConditions") is not None else None,
-            "match_constraints": V1alpha1MatchResources.from_dict(obj.get("matchConstraints")) if obj.get("matchConstraints") is not None else None,
-            "param_kind": V1alpha1ParamKind.from_dict(obj.get("paramKind")) if obj.get("paramKind") is not None else None,
-            "validations": [V1alpha1Validation.from_dict(_item) for _item in obj.get("validations")] if obj.get("validations") is not None else None,
-            "variables": [V1alpha1Variable.from_dict(_item) for _item in obj.get("variables")] if obj.get("variables") is not None else None
+        _obj = cls.model_validate({
+            "auditAnnotations": [V1alpha1AuditAnnotation.from_dict(_item) for _item in obj["auditAnnotations"]] if obj.get("auditAnnotations") is not None else None,
+            "failurePolicy": obj.get("failurePolicy"),
+            "matchConditions": [V1alpha1MatchCondition.from_dict(_item) for _item in obj["matchConditions"]] if obj.get("matchConditions") is not None else None,
+            "matchConstraints": V1alpha1MatchResources.from_dict(obj["matchConstraints"]) if obj.get("matchConstraints") is not None else None,
+            "paramKind": V1alpha1ParamKind.from_dict(obj["paramKind"]) if obj.get("paramKind") is not None else None,
+            "validations": [V1alpha1Validation.from_dict(_item) for _item in obj["validations"]] if obj.get("validations") is not None else None,
+            "variables": [V1alpha1Variable.from_dict(_item) for _item in obj["variables"]] if obj.get("variables") is not None else None
         })
+        # store additional fields in additional_properties
+        for _key in obj.keys():
+            if _key not in cls.__properties:
+                _obj.additional_properties[_key] = obj.get(_key)
+
         return _obj
 
 

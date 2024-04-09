@@ -1,3 +1,5 @@
 {
-  "packageName": "client"
+  "packageName": "client",
+  "useOneOfDiscriminatorLookup": "true",
+  "disallowAdditionalPropertiesIfNotPresent": false
 }

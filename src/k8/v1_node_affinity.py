@@ -17,44 +17,63 @@ import pprint
 import re  # noqa: F401
 import json
 
-
-from typing import List, Optional
-from pydantic import BaseModel, Field, conlist
+from pydantic import BaseModel, ConfigDict, Field
+from typing import Any, ClassVar, Dict, List, Optional
 from .v1_node_selector import V1NodeSelector
 from .v1_preferred_scheduling_term import V1PreferredSchedulingTerm
+from typing import Optional, Set
+from typing_extensions import Self
 
 class V1NodeAffinity(BaseModel):
     """
-    Node affinity is a group of node affinity scheduling rules.  # noqa: E501
-    """
-    preferred_during_scheduling_ignored_during_execution: Optional[list[V1PreferredSchedulingTerm]] = Field(default=None, alias="preferredDuringSchedulingIgnoredDuringExecution", description="The scheduler will prefer to schedule pods to nodes that satisfy the affinity expressions specified by this field, but it may choose a node that violates one or more of the expressions. The node that is most preferred is the one with the greatest sum of weights, i.e. for each node that meets all of the scheduling requirements (resource request, requiredDuringScheduling affinity expressions, etc.), compute a sum by iterating through the elements of this field and adding \"weight\" to the sum if the node matches the corresponding matchExpressions; the node(s) with the highest sum are the most preferred.")
+    Node affinity is a group of node affinity scheduling rules.
+    """ # noqa: E501
+    preferred_during_scheduling_ignored_during_execution: Optional[List[V1PreferredSchedulingTerm]] = Field(default=None, description="The scheduler will prefer to schedule pods to nodes that satisfy the affinity expressions specified by this field, but it may choose a node that violates one or more of the expressions. The node that is most preferred is the one with the greatest sum of weights, i.e. for each node that meets all of the scheduling requirements (resource request, requiredDuringScheduling affinity expressions, etc.), compute a sum by iterating through the elements of this field and adding \"weight\" to the sum if the node matches the corresponding matchExpressions; the node(s) with the highest sum are the most preferred.", alias="preferredDuringSchedulingIgnoredDuringExecution")
     required_during_scheduling_ignored_during_execution: Optional[V1NodeSelector] = Field(default=None, alias="requiredDuringSchedulingIgnoredDuringExecution")
-    __properties = ["preferredDuringSchedulingIgnoredDuringExecution", "requiredDuringSchedulingIgnoredDuringExecution"]
+    additional_properties: Dict[str, Any] = {}
+    __properties: ClassVar[List[str]] = ["preferredDuringSchedulingIgnoredDuringExecution", "requiredDuringSchedulingIgnoredDuringExecution"]
 
-    class Config:
-        """Pydantic configuration"""
-        allow_population_by_field_name = True
-        validate_assignment = True
+    model_config = ConfigDict(
+        populate_by_name=True,
+        validate_assignment=True,
+        protected_namespaces=(),
+    )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
-        return pprint.pformat(self.dict(by_alias=True))
+        return pprint.pformat(self.model_dump(by_alias=True))
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> V1NodeAffinity:
+    def from_json(cls, json_str: str) -> Optional[Self]:
         """Create an instance of V1NodeAffinity from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.dict(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        * Fields in `self.additional_properties` are added to the output dict.
+        """
+        excluded_fields: Set[str] = set([
+            "additional_properties",
+        ])
+
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude=excluded_fields,
+            exclude_none=True,
+        )
         # override the default output from pydantic by calling `to_dict()` of each item in preferred_during_scheduling_ignored_during_execution (list)
         _items = []
         if self.preferred_during_scheduling_ignored_during_execution:
@@ -65,21 +84,31 @@ class V1NodeAffinity(BaseModel):
         # override the default output from pydantic by calling `to_dict()` of required_during_scheduling_ignored_during_execution
         if self.required_during_scheduling_ignored_during_execution:
             _dict['requiredDuringSchedulingIgnoredDuringExecution'] = self.required_during_scheduling_ignored_during_execution.to_dict()
+        # puts key-value pairs in additional_properties in the top level
+        if self.additional_properties is not None:
+            for _key, _value in self.additional_properties.items():
+                _dict[_key] = _value
+
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> V1NodeAffinity:
+    def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
         """Create an instance of V1NodeAffinity from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return V1NodeAffinity.parse_obj(obj)
+            return cls.model_validate(obj)
 
-        _obj = V1NodeAffinity.parse_obj({
-            "preferred_during_scheduling_ignored_during_execution": [V1PreferredSchedulingTerm.from_dict(_item) for _item in obj.get("preferredDuringSchedulingIgnoredDuringExecution")] if obj.get("preferredDuringSchedulingIgnoredDuringExecution") is not None else None,
-            "required_during_scheduling_ignored_during_execution": V1NodeSelector.from_dict(obj.get("requiredDuringSchedulingIgnoredDuringExecution")) if obj.get("requiredDuringSchedulingIgnoredDuringExecution") is not None else None
+        _obj = cls.model_validate({
+            "preferredDuringSchedulingIgnoredDuringExecution": [V1PreferredSchedulingTerm.from_dict(_item) for _item in obj["preferredDuringSchedulingIgnoredDuringExecution"]] if obj.get("preferredDuringSchedulingIgnoredDuringExecution") is not None else None,
+            "requiredDuringSchedulingIgnoredDuringExecution": V1NodeSelector.from_dict(obj["requiredDuringSchedulingIgnoredDuringExecution"]) if obj.get("requiredDuringSchedulingIgnoredDuringExecution") is not None else None
         })
+        # store additional fields in additional_properties
+        for _key in obj.keys():
+            if _key not in cls.__properties:
+                _obj.additional_properties[_key] = obj.get(_key)
+
         return _obj
 
 

@@ -17,49 +17,68 @@ import pprint
 import re  # noqa: F401
 import json
 
-
-from typing import List, Optional
-from pydantic import BaseModel, Field, StrictInt, conlist
+from pydantic import BaseModel, ConfigDict, Field, StrictInt
+from typing import Any, ClassVar, Dict, List, Optional
 from .v1_deployment_condition import V1DeploymentCondition
+from typing import Optional, Set
+from typing_extensions import Self
 
 class V1DeploymentStatus(BaseModel):
     """
-    DeploymentStatus is the most recently observed status of the Deployment.  # noqa: E501
-    """
-    available_replicas: Optional[StrictInt] = Field(default=None, alias="availableReplicas", description="Total number of available pods (ready for at least minReadySeconds) targeted by this deployment.")
-    collision_count: Optional[StrictInt] = Field(default=None, alias="collisionCount", description="Count of hash collisions for the Deployment. The Deployment controller uses this field as a collision avoidance mechanism when it needs to create the name for the newest ReplicaSet.")
-    conditions: Optional[list[V1DeploymentCondition]] = Field(default=None, description="Represents the latest available observations of a deployment's current state.")
-    observed_generation: Optional[StrictInt] = Field(default=None, alias="observedGeneration", description="The generation observed by the deployment controller.")
-    ready_replicas: Optional[StrictInt] = Field(default=None, alias="readyReplicas", description="readyReplicas is the number of pods targeted by this Deployment with a Ready Condition.")
+    DeploymentStatus is the most recently observed status of the Deployment.
+    """ # noqa: E501
+    available_replicas: Optional[StrictInt] = Field(default=None, description="Total number of available pods (ready for at least minReadySeconds) targeted by this deployment.", alias="availableReplicas")
+    collision_count: Optional[StrictInt] = Field(default=None, description="Count of hash collisions for the Deployment. The Deployment controller uses this field as a collision avoidance mechanism when it needs to create the name for the newest ReplicaSet.", alias="collisionCount")
+    conditions: Optional[List[V1DeploymentCondition]] = Field(default=None, description="Represents the latest available observations of a deployment's current state.")
+    observed_generation: Optional[StrictInt] = Field(default=None, description="The generation observed by the deployment controller.", alias="observedGeneration")
+    ready_replicas: Optional[StrictInt] = Field(default=None, description="readyReplicas is the number of pods targeted by this Deployment with a Ready Condition.", alias="readyReplicas")
     replicas: Optional[StrictInt] = Field(default=None, description="Total number of non-terminated pods targeted by this deployment (their labels match the selector).")
-    unavailable_replicas: Optional[StrictInt] = Field(default=None, alias="unavailableReplicas", description="Total number of unavailable pods targeted by this deployment. This is the total number of pods that are still required for the deployment to have 100% available capacity. They may either be pods that are running but not yet available or pods that still have not been created.")
-    updated_replicas: Optional[StrictInt] = Field(default=None, alias="updatedReplicas", description="Total number of non-terminated pods targeted by this deployment that have the desired template spec.")
-    __properties = ["availableReplicas", "collisionCount", "conditions", "observedGeneration", "readyReplicas", "replicas", "unavailableReplicas", "updatedReplicas"]
+    unavailable_replicas: Optional[StrictInt] = Field(default=None, description="Total number of unavailable pods targeted by this deployment. This is the total number of pods that are still required for the deployment to have 100% available capacity. They may either be pods that are running but not yet available or pods that still have not been created.", alias="unavailableReplicas")
+    updated_replicas: Optional[StrictInt] = Field(default=None, description="Total number of non-terminated pods targeted by this deployment that have the desired template spec.", alias="updatedReplicas")
+    additional_properties: Dict[str, Any] = {}
+    __properties: ClassVar[List[str]] = ["availableReplicas", "collisionCount", "conditions", "observedGeneration", "readyReplicas", "replicas", "unavailableReplicas", "updatedReplicas"]
 
-    class Config:
-        """Pydantic configuration"""
-        allow_population_by_field_name = True
-        validate_assignment = True
+    model_config = ConfigDict(
+        populate_by_name=True,
+        validate_assignment=True,
+        protected_namespaces=(),
+    )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
-        return pprint.pformat(self.dict(by_alias=True))
+        return pprint.pformat(self.model_dump(by_alias=True))
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> V1DeploymentStatus:
+    def from_json(cls, json_str: str) -> Optional[Self]:
         """Create an instance of V1DeploymentStatus from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.dict(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        * Fields in `self.additional_properties` are added to the output dict.
+        """
+        excluded_fields: Set[str] = set([
+            "additional_properties",
+        ])
+
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude=excluded_fields,
+            exclude_none=True,
+        )
         # override the default output from pydantic by calling `to_dict()` of each item in conditions (list)
         _items = []
         if self.conditions:
@@ -67,27 +86,37 @@ class V1DeploymentStatus(BaseModel):
                 if _item:
                     _items.append(_item.to_dict())
             _dict['conditions'] = _items
+        # puts key-value pairs in additional_properties in the top level
+        if self.additional_properties is not None:
+            for _key, _value in self.additional_properties.items():
+                _dict[_key] = _value
+
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> V1DeploymentStatus:
+    def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
         """Create an instance of V1DeploymentStatus from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return V1DeploymentStatus.parse_obj(obj)
+            return cls.model_validate(obj)
 
-        _obj = V1DeploymentStatus.parse_obj({
-            "available_replicas": obj.get("availableReplicas"),
-            "collision_count": obj.get("collisionCount"),
-            "conditions": [V1DeploymentCondition.from_dict(_item) for _item in obj.get("conditions")] if obj.get("conditions") is not None else None,
-            "observed_generation": obj.get("observedGeneration"),
-            "ready_replicas": obj.get("readyReplicas"),
+        _obj = cls.model_validate({
+            "availableReplicas": obj.get("availableReplicas"),
+            "collisionCount": obj.get("collisionCount"),
+            "conditions": [V1DeploymentCondition.from_dict(_item) for _item in obj["conditions"]] if obj.get("conditions") is not None else None,
+            "observedGeneration": obj.get("observedGeneration"),
+            "readyReplicas": obj.get("readyReplicas"),
             "replicas": obj.get("replicas"),
-            "unavailable_replicas": obj.get("unavailableReplicas"),
-            "updated_replicas": obj.get("updatedReplicas")
+            "unavailableReplicas": obj.get("unavailableReplicas"),
+            "updatedReplicas": obj.get("updatedReplicas")
         })
+        # store additional fields in additional_properties
+        for _key in obj.keys():
+            if _key not in cls.__properties:
+                _obj.additional_properties[_key] = obj.get(_key)
+
         return _obj
 
 

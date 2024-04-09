@@ -17,64 +17,93 @@ import pprint
 import re  # noqa: F401
 import json
 
-
-from typing import Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
+from typing import Any, ClassVar, Dict, List, Optional
 from .v1_lifecycle_handler import V1LifecycleHandler
+from typing import Optional, Set
+from typing_extensions import Self
 
 class V1Lifecycle(BaseModel):
     """
-    Lifecycle describes actions that the management system should take in response to container lifecycle events. For the PostStart and PreStop lifecycle handlers, management of the container blocks until the action is complete, unless the container process fails, in which case the handler is aborted.  # noqa: E501
-    """
+    Lifecycle describes actions that the management system should take in response to container lifecycle events. For the PostStart and PreStop lifecycle handlers, management of the container blocks until the action is complete, unless the container process fails, in which case the handler is aborted.
+    """ # noqa: E501
     post_start: Optional[V1LifecycleHandler] = Field(default=None, alias="postStart")
     pre_stop: Optional[V1LifecycleHandler] = Field(default=None, alias="preStop")
-    __properties = ["postStart", "preStop"]
+    additional_properties: Dict[str, Any] = {}
+    __properties: ClassVar[List[str]] = ["postStart", "preStop"]
 
-    class Config:
-        """Pydantic configuration"""
-        allow_population_by_field_name = True
-        validate_assignment = True
+    model_config = ConfigDict(
+        populate_by_name=True,
+        validate_assignment=True,
+        protected_namespaces=(),
+    )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
-        return pprint.pformat(self.dict(by_alias=True))
+        return pprint.pformat(self.model_dump(by_alias=True))
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> V1Lifecycle:
+    def from_json(cls, json_str: str) -> Optional[Self]:
         """Create an instance of V1Lifecycle from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.dict(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        * Fields in `self.additional_properties` are added to the output dict.
+        """
+        excluded_fields: Set[str] = set([
+            "additional_properties",
+        ])
+
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude=excluded_fields,
+            exclude_none=True,
+        )
         # override the default output from pydantic by calling `to_dict()` of post_start
         if self.post_start:
             _dict['postStart'] = self.post_start.to_dict()
         # override the default output from pydantic by calling `to_dict()` of pre_stop
         if self.pre_stop:
             _dict['preStop'] = self.pre_stop.to_dict()
+        # puts key-value pairs in additional_properties in the top level
+        if self.additional_properties is not None:
+            for _key, _value in self.additional_properties.items():
+                _dict[_key] = _value
+
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> V1Lifecycle:
+    def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
         """Create an instance of V1Lifecycle from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return V1Lifecycle.parse_obj(obj)
+            return cls.model_validate(obj)
 
-        _obj = V1Lifecycle.parse_obj({
-            "post_start": V1LifecycleHandler.from_dict(obj.get("postStart")) if obj.get("postStart") is not None else None,
-            "pre_stop": V1LifecycleHandler.from_dict(obj.get("preStop")) if obj.get("preStop") is not None else None
+        _obj = cls.model_validate({
+            "postStart": V1LifecycleHandler.from_dict(obj["postStart"]) if obj.get("postStart") is not None else None,
+            "preStop": V1LifecycleHandler.from_dict(obj["preStop"]) if obj.get("preStop") is not None else None
         })
+        # store additional fields in additional_properties
+        for _key in obj.keys():
+            if _key not in cls.__properties:
+                _obj.additional_properties[_key] = obj.get(_key)
+
         return _obj
 
 

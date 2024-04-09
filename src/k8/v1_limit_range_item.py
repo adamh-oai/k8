@@ -17,65 +17,94 @@ import pprint
 import re  # noqa: F401
 import json
 
-
-from typing import Dict, Optional
-from pydantic import BaseModel, Field, StrictStr
+from pydantic import BaseModel, ConfigDict, Field, StrictStr
+from typing import Any, ClassVar, Dict, List, Optional
+from typing import Optional, Set
+from typing_extensions import Self
 
 class V1LimitRangeItem(BaseModel):
     """
-    LimitRangeItem defines a min/max usage limit for any resource that matches on kind.  # noqa: E501
-    """
+    LimitRangeItem defines a min/max usage limit for any resource that matches on kind.
+    """ # noqa: E501
     default: Optional[Dict[str, StrictStr]] = Field(default=None, description="Default resource requirement limit value by resource name if resource limit is omitted.")
-    default_request: Optional[Dict[str, StrictStr]] = Field(default=None, alias="defaultRequest", description="DefaultRequest is the default resource requirement request value by resource name if resource request is omitted.")
+    default_request: Optional[Dict[str, StrictStr]] = Field(default=None, description="DefaultRequest is the default resource requirement request value by resource name if resource request is omitted.", alias="defaultRequest")
     max: Optional[Dict[str, StrictStr]] = Field(default=None, description="Max usage constraints on this kind by resource name.")
-    max_limit_request_ratio: Optional[Dict[str, StrictStr]] = Field(default=None, alias="maxLimitRequestRatio", description="MaxLimitRequestRatio if specified, the named resource must have a request and limit that are both non-zero where limit divided by request is less than or equal to the enumerated value; this represents the max burst for the named resource.")
+    max_limit_request_ratio: Optional[Dict[str, StrictStr]] = Field(default=None, description="MaxLimitRequestRatio if specified, the named resource must have a request and limit that are both non-zero where limit divided by request is less than or equal to the enumerated value; this represents the max burst for the named resource.", alias="maxLimitRequestRatio")
     min: Optional[Dict[str, StrictStr]] = Field(default=None, description="Min usage constraints on this kind by resource name.")
-    type: StrictStr = Field(..., description="Type of resource that this limit applies to.")
-    __properties = ["default", "defaultRequest", "max", "maxLimitRequestRatio", "min", "type"]
+    type: StrictStr = Field(description="Type of resource that this limit applies to.")
+    additional_properties: Dict[str, Any] = {}
+    __properties: ClassVar[List[str]] = ["default", "defaultRequest", "max", "maxLimitRequestRatio", "min", "type"]
 
-    class Config:
-        """Pydantic configuration"""
-        allow_population_by_field_name = True
-        validate_assignment = True
+    model_config = ConfigDict(
+        populate_by_name=True,
+        validate_assignment=True,
+        protected_namespaces=(),
+    )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
-        return pprint.pformat(self.dict(by_alias=True))
+        return pprint.pformat(self.model_dump(by_alias=True))
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> V1LimitRangeItem:
+    def from_json(cls, json_str: str) -> Optional[Self]:
         """Create an instance of V1LimitRangeItem from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.dict(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        * Fields in `self.additional_properties` are added to the output dict.
+        """
+        excluded_fields: Set[str] = set([
+            "additional_properties",
+        ])
+
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude=excluded_fields,
+            exclude_none=True,
+        )
+        # puts key-value pairs in additional_properties in the top level
+        if self.additional_properties is not None:
+            for _key, _value in self.additional_properties.items():
+                _dict[_key] = _value
+
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> V1LimitRangeItem:
+    def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
         """Create an instance of V1LimitRangeItem from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return V1LimitRangeItem.parse_obj(obj)
+            return cls.model_validate(obj)
 
-        _obj = V1LimitRangeItem.parse_obj({
+        _obj = cls.model_validate({
             "default": obj.get("default"),
-            "default_request": obj.get("defaultRequest"),
+            "defaultRequest": obj.get("defaultRequest"),
             "max": obj.get("max"),
-            "max_limit_request_ratio": obj.get("maxLimitRequestRatio"),
+            "maxLimitRequestRatio": obj.get("maxLimitRequestRatio"),
             "min": obj.get("min"),
             "type": obj.get("type")
         })
+        # store additional fields in additional_properties
+        for _key in obj.keys():
+            if _key not in cls.__properties:
+                _obj.additional_properties[_key] = obj.get(_key)
+
         return _obj
 
 

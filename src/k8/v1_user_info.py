@@ -17,70 +17,90 @@ import pprint
 import re  # noqa: F401
 import json
 
-
-from typing import Dict, List, Optional
-from pydantic import BaseModel, Field, StrictStr, conlist
+from pydantic import BaseModel, ConfigDict, Field, StrictStr
+from typing import Any, ClassVar, Dict, List, Optional
+from typing import Optional, Set
+from typing_extensions import Self
 
 class V1UserInfo(BaseModel):
     """
-    UserInfo holds the information about the user needed to implement the user.Info interface.  # noqa: E501
-    """
-    extra: Optional[Dict[str, list[StrictStr]]] = Field(default=None, description="Any additional information provided by the authenticator.")
-    groups: Optional[list[StrictStr]] = Field(default=None, description="The names of groups this user is a part of.")
+    UserInfo holds the information about the user needed to implement the user.Info interface.
+    """ # noqa: E501
+    extra: Optional[Dict[str, List[StrictStr]]] = Field(default=None, description="Any additional information provided by the authenticator.")
+    groups: Optional[List[StrictStr]] = Field(default=None, description="The names of groups this user is a part of.")
     uid: Optional[StrictStr] = Field(default=None, description="A unique value that identifies this user across time. If this user is deleted and another user by the same name is added, they will have different UIDs.")
     username: Optional[StrictStr] = Field(default=None, description="The name that uniquely identifies this user among all active users.")
-    __properties = ["extra", "groups", "uid", "username"]
+    additional_properties: Dict[str, Any] = {}
+    __properties: ClassVar[List[str]] = ["extra", "groups", "uid", "username"]
 
-    class Config:
-        """Pydantic configuration"""
-        allow_population_by_field_name = True
-        validate_assignment = True
+    model_config = ConfigDict(
+        populate_by_name=True,
+        validate_assignment=True,
+        protected_namespaces=(),
+    )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
-        return pprint.pformat(self.dict(by_alias=True))
+        return pprint.pformat(self.model_dump(by_alias=True))
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> V1UserInfo:
+    def from_json(cls, json_str: str) -> Optional[Self]:
         """Create an instance of V1UserInfo from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.dict(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
-        # override the default output from pydantic by calling `to_dict()` of each value in extra (dict of array)
-        _field_dict_of_array = {}
-        if self.extra:
-            for _key in self.extra:
-                if self.extra[_key]:
-                    _field_dict_of_array[_key] = [
-                        _item.to_dict() for _item in self.extra[_key]
-                    ]
-            _dict['extra'] = _field_dict_of_array
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        * Fields in `self.additional_properties` are added to the output dict.
+        """
+        excluded_fields: Set[str] = set([
+            "additional_properties",
+        ])
+
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude=excluded_fields,
+            exclude_none=True,
+        )
+        # puts key-value pairs in additional_properties in the top level
+        if self.additional_properties is not None:
+            for _key, _value in self.additional_properties.items():
+                _dict[_key] = _value
+
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> V1UserInfo:
+    def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
         """Create an instance of V1UserInfo from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return V1UserInfo.parse_obj(obj)
+            return cls.model_validate(obj)
 
-        _obj = V1UserInfo.parse_obj({
+        _obj = cls.model_validate({
             "extra": obj.get("extra"),
             "groups": obj.get("groups"),
             "uid": obj.get("uid"),
             "username": obj.get("username")
         })
+        # store additional fields in additional_properties
+        for _key in obj.keys():
+            if _key not in cls.__properties:
+                _obj.additional_properties[_key] = obj.get(_key)
+
         return _obj
 
 

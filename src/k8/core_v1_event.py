@@ -18,60 +18,80 @@ import re  # noqa: F401
 import json
 
 from datetime import datetime
-from typing import Optional
-from pydantic import BaseModel, Field, StrictInt, StrictStr
+from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr
+from typing import Any, ClassVar, Dict, List, Optional
 from .core_v1_event_series import CoreV1EventSeries
 from .v1_event_source import V1EventSource
 from .v1_object_meta import V1ObjectMeta
 from .v1_object_reference import V1ObjectReference
+from typing import Optional, Set
+from typing_extensions import Self
 
 class CoreV1Event(BaseModel):
     """
-    Event is a report of an event somewhere in the cluster.  Events have a limited retention time and triggers and messages may evolve with time.  Event consumers should not rely on the timing of an event with a given Reason reflecting a consistent underlying trigger, or the continued existence of events with that Reason.  Events should be treated as informative, best-effort, supplemental data.  # noqa: E501
-    """
+    Event is a report of an event somewhere in the cluster.  Events have a limited retention time and triggers and messages may evolve with time.  Event consumers should not rely on the timing of an event with a given Reason reflecting a consistent underlying trigger, or the continued existence of events with that Reason.  Events should be treated as informative, best-effort, supplemental data.
+    """ # noqa: E501
     action: Optional[StrictStr] = Field(default=None, description="What action was taken/failed regarding to the Regarding object.")
-    api_version: Optional[StrictStr] = Field(default=None, alias="apiVersion", description="APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources")
+    api_version: Optional[StrictStr] = Field(default=None, description="APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources", alias="apiVersion")
     count: Optional[StrictInt] = Field(default=None, description="The number of times this event has occurred.")
-    event_time: Optional[datetime] = Field(default=None, alias="eventTime", description="Time when this Event was first observed.")
-    first_timestamp: Optional[datetime] = Field(default=None, alias="firstTimestamp", description="The time at which the event was first recorded. (Time of server receipt is in TypeMeta.)")
-    involved_object: V1ObjectReference = Field(..., alias="involvedObject")
+    event_time: Optional[datetime] = Field(default=None, description="Time when this Event was first observed.", alias="eventTime")
+    first_timestamp: Optional[datetime] = Field(default=None, description="The time at which the event was first recorded. (Time of server receipt is in TypeMeta.)", alias="firstTimestamp")
+    involved_object: V1ObjectReference = Field(alias="involvedObject")
     kind: Optional[StrictStr] = Field(default=None, description="Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds")
-    last_timestamp: Optional[datetime] = Field(default=None, alias="lastTimestamp", description="The time at which the most recent occurrence of this event was recorded.")
+    last_timestamp: Optional[datetime] = Field(default=None, description="The time at which the most recent occurrence of this event was recorded.", alias="lastTimestamp")
     message: Optional[StrictStr] = Field(default=None, description="A human-readable description of the status of this operation.")
-    metadata: V1ObjectMeta = Field(...)
+    metadata: V1ObjectMeta
     reason: Optional[StrictStr] = Field(default=None, description="This should be a short, machine understandable string that gives the reason for the transition into the object's current status.")
     related: Optional[V1ObjectReference] = None
-    reporting_component: Optional[StrictStr] = Field(default=None, alias="reportingComponent", description="Name of the controller that emitted this Event, e.g. `kubernetes.io/kubelet`.")
-    reporting_instance: Optional[StrictStr] = Field(default=None, alias="reportingInstance", description="ID of the controller instance, e.g. `kubelet-xyzf`.")
+    reporting_component: Optional[StrictStr] = Field(default=None, description="Name of the controller that emitted this Event, e.g. `kubernetes.io/kubelet`.", alias="reportingComponent")
+    reporting_instance: Optional[StrictStr] = Field(default=None, description="ID of the controller instance, e.g. `kubelet-xyzf`.", alias="reportingInstance")
     series: Optional[CoreV1EventSeries] = None
     source: Optional[V1EventSource] = None
     type: Optional[StrictStr] = Field(default=None, description="Type of this event (Normal, Warning), new types could be added in the future")
-    __properties = ["action", "apiVersion", "count", "eventTime", "firstTimestamp", "involvedObject", "kind", "lastTimestamp", "message", "metadata", "reason", "related", "reportingComponent", "reportingInstance", "series", "source", "type"]
+    additional_properties: Dict[str, Any] = {}
+    __properties: ClassVar[List[str]] = ["action", "apiVersion", "count", "eventTime", "firstTimestamp", "involvedObject", "kind", "lastTimestamp", "message", "metadata", "reason", "related", "reportingComponent", "reportingInstance", "series", "source", "type"]
 
-    class Config:
-        """Pydantic configuration"""
-        allow_population_by_field_name = True
-        validate_assignment = True
+    model_config = ConfigDict(
+        populate_by_name=True,
+        validate_assignment=True,
+        protected_namespaces=(),
+    )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
-        return pprint.pformat(self.dict(by_alias=True))
+        return pprint.pformat(self.model_dump(by_alias=True))
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> CoreV1Event:
+    def from_json(cls, json_str: str) -> Optional[Self]:
         """Create an instance of CoreV1Event from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.dict(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        * Fields in `self.additional_properties` are added to the output dict.
+        """
+        excluded_fields: Set[str] = set([
+            "additional_properties",
+        ])
+
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude=excluded_fields,
+            exclude_none=True,
+        )
         # override the default output from pydantic by calling `to_dict()` of involved_object
         if self.involved_object:
             _dict['involvedObject'] = self.involved_object.to_dict()
@@ -87,36 +107,46 @@ class CoreV1Event(BaseModel):
         # override the default output from pydantic by calling `to_dict()` of source
         if self.source:
             _dict['source'] = self.source.to_dict()
+        # puts key-value pairs in additional_properties in the top level
+        if self.additional_properties is not None:
+            for _key, _value in self.additional_properties.items():
+                _dict[_key] = _value
+
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> CoreV1Event:
+    def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
         """Create an instance of CoreV1Event from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return CoreV1Event.parse_obj(obj)
+            return cls.model_validate(obj)
 
-        _obj = CoreV1Event.parse_obj({
+        _obj = cls.model_validate({
             "action": obj.get("action"),
-            "api_version": obj.get("apiVersion"),
+            "apiVersion": obj.get("apiVersion"),
             "count": obj.get("count"),
-            "event_time": obj.get("eventTime"),
-            "first_timestamp": obj.get("firstTimestamp"),
-            "involved_object": V1ObjectReference.from_dict(obj.get("involvedObject")) if obj.get("involvedObject") is not None else None,
+            "eventTime": obj.get("eventTime"),
+            "firstTimestamp": obj.get("firstTimestamp"),
+            "involvedObject": V1ObjectReference.from_dict(obj["involvedObject"]) if obj.get("involvedObject") is not None else None,
             "kind": obj.get("kind"),
-            "last_timestamp": obj.get("lastTimestamp"),
+            "lastTimestamp": obj.get("lastTimestamp"),
             "message": obj.get("message"),
-            "metadata": V1ObjectMeta.from_dict(obj.get("metadata")) if obj.get("metadata") is not None else None,
+            "metadata": V1ObjectMeta.from_dict(obj["metadata"]) if obj.get("metadata") is not None else None,
             "reason": obj.get("reason"),
-            "related": V1ObjectReference.from_dict(obj.get("related")) if obj.get("related") is not None else None,
-            "reporting_component": obj.get("reportingComponent"),
-            "reporting_instance": obj.get("reportingInstance"),
-            "series": CoreV1EventSeries.from_dict(obj.get("series")) if obj.get("series") is not None else None,
-            "source": V1EventSource.from_dict(obj.get("source")) if obj.get("source") is not None else None,
+            "related": V1ObjectReference.from_dict(obj["related"]) if obj.get("related") is not None else None,
+            "reportingComponent": obj.get("reportingComponent"),
+            "reportingInstance": obj.get("reportingInstance"),
+            "series": CoreV1EventSeries.from_dict(obj["series"]) if obj.get("series") is not None else None,
+            "source": V1EventSource.from_dict(obj["source"]) if obj.get("source") is not None else None,
             "type": obj.get("type")
         })
+        # store additional fields in additional_properties
+        for _key in obj.keys():
+            if _key not in cls.__properties:
+                _obj.additional_properties[_key] = obj.get(_key)
+
         return _obj
 
 

@@ -17,47 +17,66 @@ import pprint
 import re  # noqa: F401
 import json
 
-
-from typing import List, Optional
-from pydantic import BaseModel, Field, StrictStr, conlist
+from pydantic import BaseModel, ConfigDict, Field, StrictStr
+from typing import Any, ClassVar, Dict, List, Optional
 from .v1_label_selector import V1LabelSelector
 from .v1alpha1_named_rule_with_operations import V1alpha1NamedRuleWithOperations
+from typing import Optional, Set
+from typing_extensions import Self
 
 class V1alpha1MatchResources(BaseModel):
     """
-    MatchResources decides whether to run the admission control policy on an object based on whether it meets the match criteria. The exclude rules take precedence over include rules (if a resource matches both, it is excluded)  # noqa: E501
-    """
-    exclude_resource_rules: Optional[list[V1alpha1NamedRuleWithOperations]] = Field(default=None, alias="excludeResourceRules", description="ExcludeResourceRules describes what operations on what resources/subresources the ValidatingAdmissionPolicy should not care about. The exclude rules take precedence over include rules (if a resource matches both, it is excluded)")
-    match_policy: Optional[StrictStr] = Field(default=None, alias="matchPolicy", description="matchPolicy defines how the \"MatchResources\" list is used to match incoming requests. Allowed values are \"Exact\" or \"Equivalent\".  - Exact: match a request only if it exactly matches a specified rule. For example, if deployments can be modified via apps/v1, apps/v1beta1, and extensions/v1beta1, but \"rules\" only included `apiGroups:[\"apps\"], apiVersions:[\"v1\"], resources: [\"deployments\"]`, a request to apps/v1beta1 or extensions/v1beta1 would not be sent to the ValidatingAdmissionPolicy.  - Equivalent: match a request if modifies a resource listed in rules, even via another API group or version. For example, if deployments can be modified via apps/v1, apps/v1beta1, and extensions/v1beta1, and \"rules\" only included `apiGroups:[\"apps\"], apiVersions:[\"v1\"], resources: [\"deployments\"]`, a request to apps/v1beta1 or extensions/v1beta1 would be converted to apps/v1 and sent to the ValidatingAdmissionPolicy.  Defaults to \"Equivalent\"")
+    MatchResources decides whether to run the admission control policy on an object based on whether it meets the match criteria. The exclude rules take precedence over include rules (if a resource matches both, it is excluded)
+    """ # noqa: E501
+    exclude_resource_rules: Optional[List[V1alpha1NamedRuleWithOperations]] = Field(default=None, description="ExcludeResourceRules describes what operations on what resources/subresources the ValidatingAdmissionPolicy should not care about. The exclude rules take precedence over include rules (if a resource matches both, it is excluded)", alias="excludeResourceRules")
+    match_policy: Optional[StrictStr] = Field(default=None, description="matchPolicy defines how the \"MatchResources\" list is used to match incoming requests. Allowed values are \"Exact\" or \"Equivalent\".  - Exact: match a request only if it exactly matches a specified rule. For example, if deployments can be modified via apps/v1, apps/v1beta1, and extensions/v1beta1, but \"rules\" only included `apiGroups:[\"apps\"], apiVersions:[\"v1\"], resources: [\"deployments\"]`, a request to apps/v1beta1 or extensions/v1beta1 would not be sent to the ValidatingAdmissionPolicy.  - Equivalent: match a request if modifies a resource listed in rules, even via another API group or version. For example, if deployments can be modified via apps/v1, apps/v1beta1, and extensions/v1beta1, and \"rules\" only included `apiGroups:[\"apps\"], apiVersions:[\"v1\"], resources: [\"deployments\"]`, a request to apps/v1beta1 or extensions/v1beta1 would be converted to apps/v1 and sent to the ValidatingAdmissionPolicy.  Defaults to \"Equivalent\"", alias="matchPolicy")
     namespace_selector: Optional[V1LabelSelector] = Field(default=None, alias="namespaceSelector")
     object_selector: Optional[V1LabelSelector] = Field(default=None, alias="objectSelector")
-    resource_rules: Optional[list[V1alpha1NamedRuleWithOperations]] = Field(default=None, alias="resourceRules", description="ResourceRules describes what operations on what resources/subresources the ValidatingAdmissionPolicy matches. The policy cares about an operation if it matches _any_ Rule.")
-    __properties = ["excludeResourceRules", "matchPolicy", "namespaceSelector", "objectSelector", "resourceRules"]
+    resource_rules: Optional[List[V1alpha1NamedRuleWithOperations]] = Field(default=None, description="ResourceRules describes what operations on what resources/subresources the ValidatingAdmissionPolicy matches. The policy cares about an operation if it matches _any_ Rule.", alias="resourceRules")
+    additional_properties: Dict[str, Any] = {}
+    __properties: ClassVar[List[str]] = ["excludeResourceRules", "matchPolicy", "namespaceSelector", "objectSelector", "resourceRules"]
 
-    class Config:
-        """Pydantic configuration"""
-        allow_population_by_field_name = True
-        validate_assignment = True
+    model_config = ConfigDict(
+        populate_by_name=True,
+        validate_assignment=True,
+        protected_namespaces=(),
+    )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
-        return pprint.pformat(self.dict(by_alias=True))
+        return pprint.pformat(self.model_dump(by_alias=True))
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> V1alpha1MatchResources:
+    def from_json(cls, json_str: str) -> Optional[Self]:
         """Create an instance of V1alpha1MatchResources from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.dict(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        * Fields in `self.additional_properties` are added to the output dict.
+        """
+        excluded_fields: Set[str] = set([
+            "additional_properties",
+        ])
+
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude=excluded_fields,
+            exclude_none=True,
+        )
         # override the default output from pydantic by calling `to_dict()` of each item in exclude_resource_rules (list)
         _items = []
         if self.exclude_resource_rules:
@@ -78,24 +97,34 @@ class V1alpha1MatchResources(BaseModel):
                 if _item:
                     _items.append(_item.to_dict())
             _dict['resourceRules'] = _items
+        # puts key-value pairs in additional_properties in the top level
+        if self.additional_properties is not None:
+            for _key, _value in self.additional_properties.items():
+                _dict[_key] = _value
+
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> V1alpha1MatchResources:
+    def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
         """Create an instance of V1alpha1MatchResources from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return V1alpha1MatchResources.parse_obj(obj)
+            return cls.model_validate(obj)
 
-        _obj = V1alpha1MatchResources.parse_obj({
-            "exclude_resource_rules": [V1alpha1NamedRuleWithOperations.from_dict(_item) for _item in obj.get("excludeResourceRules")] if obj.get("excludeResourceRules") is not None else None,
-            "match_policy": obj.get("matchPolicy"),
-            "namespace_selector": V1LabelSelector.from_dict(obj.get("namespaceSelector")) if obj.get("namespaceSelector") is not None else None,
-            "object_selector": V1LabelSelector.from_dict(obj.get("objectSelector")) if obj.get("objectSelector") is not None else None,
-            "resource_rules": [V1alpha1NamedRuleWithOperations.from_dict(_item) for _item in obj.get("resourceRules")] if obj.get("resourceRules") is not None else None
+        _obj = cls.model_validate({
+            "excludeResourceRules": [V1alpha1NamedRuleWithOperations.from_dict(_item) for _item in obj["excludeResourceRules"]] if obj.get("excludeResourceRules") is not None else None,
+            "matchPolicy": obj.get("matchPolicy"),
+            "namespaceSelector": V1LabelSelector.from_dict(obj["namespaceSelector"]) if obj.get("namespaceSelector") is not None else None,
+            "objectSelector": V1LabelSelector.from_dict(obj["objectSelector"]) if obj.get("objectSelector") is not None else None,
+            "resourceRules": [V1alpha1NamedRuleWithOperations.from_dict(_item) for _item in obj["resourceRules"]] if obj.get("resourceRules") is not None else None
         })
+        # store additional fields in additional_properties
+        for _key in obj.keys():
+            if _key not in cls.__properties:
+                _obj.additional_properties[_key] = obj.get(_key)
+
         return _obj
 
 
