@@ -30,7 +30,7 @@ class V1HTTPGetAction(BaseModel):
     host: Optional[StrictStr] = Field(default=None, description="Host name to connect to, defaults to the pod IP. You probably want to set \"Host\" in httpHeaders instead.")
     http_headers: Optional[List[V1HTTPHeader]] = Field(default=None, description="Custom headers to set in the request. HTTP allows repeated headers.", alias="httpHeaders")
     path: Optional[StrictStr] = Field(default=None, description="Path to access on the HTTP server.")
-    port: Dict[str, Any] = Field(description="It's an int or a string.")
+    port: int | str = Field(description="It's an int or a string.")
     scheme: Optional[StrictStr] = Field(default=None, description="Scheme to use for connecting to the host. Defaults to HTTP.")
     additional_properties: Dict[str, Any] = {}
     __properties: ClassVar[List[str]] = ["host", "httpHeaders", "path", "port", "scheme"]
