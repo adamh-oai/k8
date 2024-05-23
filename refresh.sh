@@ -31,4 +31,7 @@ find $TARGET_DIR -type f -name "*.py" -exec sed -i '' 's/client.models\./\./g' {
 echo "Fixing IntOrStr"
 sed -i "" -E 's|Dict\[str, Any\]( = Field\(description="It'"'"'s an int or a string."\))|int \| str\1|g' $TARGET_DIR/k8/v1_http_get_action.py
 
+echo "Add py.typed"
+touch $TARGET_DIR/k8/py.typed
+
 echo "done."
